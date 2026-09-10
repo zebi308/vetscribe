@@ -1,0 +1,18 @@
+export const clinicalSchema={
+  name:'vetscribe_clinical_note',strict:true,schema:{type:'object',additionalProperties:false,required:['subjective','objective','assessment','plan','missing_information','confidence_notes'],properties:{
+    subjective:{type:'object',additionalProperties:false,required:['presenting_complaint','history','owner_observations'],properties:{presenting_complaint:{type:'string'},history:{type:'string'},owner_observations:{type:'string'}}},
+    objective:{type:'object',additionalProperties:false,required:['clinical_findings','vital_parameters','diagnostic_tests'],properties:{clinical_findings:{type:'string'},vital_parameters:{type:'array',items:{type:'object',additionalProperties:false,required:['name','value'],properties:{name:{type:'string'},value:{type:'string'}}}},diagnostic_tests:{type:'array',items:{type:'object',additionalProperties:false,required:['test','status','result'],properties:{test:{type:'string'},status:{type:'string',enum:['performed','requested','discussed']},result:{type:['string','null']}}}}}},
+    assessment:{type:'object',additionalProperties:false,required:['primary_assessment','diagnoses','differentials'],properties:{primary_assessment:{type:'string'},diagnoses:{type:'array',items:{type:'string'}},differentials:{type:'array',items:{type:'string'}}}},
+    plan:{type:'object',additionalProperties:false,required:['treatment_given','medications','follow_up','client_advice'],properties:{treatment_given:{type:'array',items:{type:'string'}},medications:{type:'array',items:{type:'object',additionalProperties:false,required:['name','dose','route','frequency','duration'],properties:{name:{type:'string'},dose:{type:['string','null']},route:{type:['string','null']},frequency:{type:['string','null']},duration:{type:['string','null']}}}},follow_up:{type:'string'},client_advice:{type:'string'}}},
+    missing_information:{type:'array',items:{type:'object',additionalProperties:false,required:['field','reason','severity'],properties:{field:{type:'string'},reason:{type:'string'},severity:{type:'string',enum:['low','medium','high']}}}},confidence_notes:{type:'array',items:{type:'string'}}
+  }}
+}
+export const ownerSchema={name:'vetscribe_owner_summary',strict:true,schema:{type:'object',additionalProperties:false,required:['title','what_we_found','what_we_discussed','treatment_and_medication','what_to_do_at_home','when_to_contact_us','follow_up'],properties:{title:{type:'string'},what_we_found:{type:'string'},what_we_discussed:{type:'string'},treatment_and_medication:{type:'string'},what_to_do_at_home:{type:'string'},when_to_contact_us:{type:'string'},follow_up:{type:'string'}}}}
+
+export async function openAIJson(args:{system:string;input:unknown;schema:unknown;model:string}){
+ const key=process.env.OPENAI_API_KEY;if(!key)throw new Error('OPENAI_API_KEY is not configured')
+ const response=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:args.model,messages:[{role:'system',content:args.system},{role:'user',content:JSON.stringify(args.input)}],response_format:{type:'json_schema',json_schema:args.schema},temperature:0})})
+ if(!response.ok)throw new Error(`OpenAI request failed: ${response.status} ${await response.text()}`)
+ const data=await response.json() as {choices?:Array<{message?:{content?:string}}>};const content=data.choices?.[0]?.message?.content;if(!content)throw new Error('OpenAI returned no structured content');return JSON.parse(content)
+}
+export function allowPost(req:any,res:any){if(req.method!=='POST'){res.status(405).json({error:'Method not allowed'});return false}return true}

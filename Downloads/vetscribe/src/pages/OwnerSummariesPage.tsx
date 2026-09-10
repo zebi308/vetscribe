@@ -1,0 +1,5 @@
+import { Link } from 'react-router-dom'
+import { Card } from '../components/ui/Card'
+import { useAppState } from '../lib/AppState'
+import { formatDateTime } from '../lib/format'
+export function OwnerSummariesPage(){const s=useAppState();return <div className="space-y-5"><div><h2 className="text-2xl font-bold">Owner Summaries</h2><p className="text-sm text-slate-500">Plain-English summaries generated only from approved clinical records.</p></div><Card>{s.ownerSummaries.length===0?<div className="p-10 text-center text-sm text-slate-500"><p className="font-semibold text-slate-700">No owner summaries yet.</p><p className="mt-1">Owner summaries will appear here after consultations are approved.</p></div>:<div className="divide-y">{s.ownerSummaries.map(sum=>{const p=s.patients.find(x=>x.id===sum.patientId)!;return <Link to={`/consultations/${sum.consultationId}`} key={sum.id} className="flex items-center justify-between gap-4 p-5 hover:bg-slate-50"><div><p className="font-bold">{sum.title}</p><p className="text-sm text-slate-500">{p.breed}</p></div><p className="text-sm text-slate-500">{formatDateTime(sum.generatedAt)}</p></Link>})}</div>}</Card></div>}

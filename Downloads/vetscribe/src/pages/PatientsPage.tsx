@@ -1,0 +1,7 @@
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Search } from 'lucide-react'
+import { Card } from '../components/ui/Card'
+import { useAppState } from '../lib/AppState'
+import { ageYears, fullName } from '../lib/format'
+export function PatientsPage(){const {patients,clients}=useAppState();const[q,setQ]=useState('');const list=useMemo(()=>patients.filter(p=>{const c=clients.find(x=>x.id===p.clientId);return `${p.name} ${c?.firstName} ${c?.lastName} ${p.microchipNumber||''}`.toLowerCase().includes(q.toLowerCase())}),[patients,clients,q]);return <div className="space-y-5"><div><h2 className="text-2xl font-bold">Patients</h2><p className="text-sm text-slate-500">Animal records are kept separate from client personal data.</p></div><Card><div className="relative border-b p-4"><Search size={17} className="absolute left-7 top-6.5 text-slate-400"/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, client or microchip" className="w-full rounded-lg border py-2 pl-9 pr-3"/></div><div className="divide-y">{list.map(p=>{const c=clients.find(x=>x.id===p.clientId)!;return <Link key={p.id} to={`/patients/${p.id}`} className="flex items-center justify-between gap-4 p-5 hover:bg-slate-50"><div><p className="font-bold">{p.name}</p><p className="text-sm text-slate-500">{p.breed} · {p.sex} · {ageYears(p.dateOfBirth)} years · {p.weightKg} kg</p></div><div className="text-right text-sm"><p className="font-medium">{fullName(c)}</p><p className="text-slate-400">Owner</p></div></Link>})}</div></Card></div>}

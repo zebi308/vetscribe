@@ -1,0 +1,6 @@
+import { allowPost, clinicalSchema, openAIJson } from './_openai.js'
+import { requireUser } from './_auth.js'
+const system=`You are a veterinary clinical documentation assistant supporting UK veterinary professionals.
+Transform the supplied consultation transcript and patient context into a structured DRAFT clinical record.
+You are NOT the treating veterinary surgeon. Never invent clinical facts, diagnoses, medicines, doses, measurements, test results or history. If information is absent, use empty strings, nulls or empty arrays as allowed by the schema. Use UK veterinary terminology and UK spelling. Separate observed facts from clinical interpretation. Identify missing information the veterinary professional may wish to review. Do not claim regulatory approval or compliance. Return only the required structured JSON.`
+export default async function handler(req:any,res:any){if(!allowPost(req,res))return;try{await requireUser(req);const data=await openAIJson({system,input:req.body,schema:clinicalSchema,model:process.env.OPENAI_CLINICAL_MODEL||'gpt-4.1-mini'});res.status(200).json(data)}catch(e){res.status(401).json({error:e instanceof Error?e.message:'Clinical note generation failed'})}}

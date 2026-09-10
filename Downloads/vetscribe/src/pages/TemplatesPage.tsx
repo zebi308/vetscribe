@@ -1,0 +1,3 @@
+import { Card } from '../components/ui/Card'
+import { TextArea } from '../components/ui/Field'
+export function TemplatesPage(){return <div className="space-y-5"><div><h2 className="text-2xl font-bold">Templates</h2><p className="text-sm text-slate-500">Configure presentation, not autonomous clinical decision-making.</p></div><Card className="p-5"><TextArea label="Default clinical note template" defaultValue={'Subjective\nObjective\nAssessment\nPlan'}/></Card><Card className="p-5"><TextArea label="Owner summary template" defaultValue={'What we found\nWhat we discussed\nTreatment and medication\nWhat to do at home\nWhen to contact us\nFollow-up'}/></Card></div>}

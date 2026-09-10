@@ -1,0 +1,3 @@
+import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+export function Field({label,...props}:InputHTMLAttributes<HTMLInputElement>&{label:string}){ return <label className="block text-sm font-medium text-slate-700">{label}<input className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900" {...props}/></label> }
+export function TextArea({label,...props}:TextareaHTMLAttributes<HTMLTextAreaElement>&{label:string}){ return <label className="block text-sm font-medium text-slate-700">{label}<textarea className="mt-1.5 min-h-28 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900" {...props}/></label> }
