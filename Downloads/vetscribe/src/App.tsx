@@ -1,28 +1,465 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import type { ReactNode } from 'react'
-import type { Role } from './types/models'
-import { AppShell } from './components/layout/AppShell'
-import { useAppState } from './lib/AppState'
-import { LoginPage } from './pages/LoginPage'
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { ConsultationsPage } from './pages/ConsultationsPage'
-import { NewConsultationPage } from './pages/NewConsultationPage'
-import { ConsultationDetailPage } from './pages/ConsultationDetailPage'
-import { PatientsPage } from './pages/PatientsPage'
-import { PatientDetailPage } from './pages/PatientDetailPage'
-import { ClientsPage } from './pages/ClientsPage'
-import { ClientDetailPage } from './pages/ClientDetailPage'
-import { OwnerSummariesPage } from './pages/OwnerSummariesPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { PracticeSettingsPage } from './pages/PracticeSettingsPage'
-import { StaffPage } from './pages/StaffPage'
-import { TemplatesPage } from './pages/TemplatesPage'
-import { PrivacyPage } from './pages/PrivacyPage'
-import { AuditPage } from './pages/AuditPage'
-import { AdminPage } from './pages/AdminPage'
-import { NotFoundPage } from './pages/NotFoundPage'
+import {
+  BrowserRouter,
+  Routes,
+  Route
+} from "react-router-dom";
 
-function Protected({children}:{children:ReactNode}){const {currentUser}=useAppState();return currentUser?<>{children}</>:<Navigate to="/login" replace/>}
-function RoleGate({allowed,children}:{allowed:Role[];children:ReactNode}){const {currentUser}=useAppState();return currentUser&&allowed.includes(currentUser.role)?<>{children}</>:<Navigate to="/dashboard" replace/>}
-export function App(){return <BrowserRouter><Routes><Route path="/login" element={<LoginPage/>}/><Route path="/forgot-password" element={<ForgotPasswordPage/>}/><Route element={<Protected><AppShell/></Protected>}><Route index element={<Navigate to="/dashboard" replace/>}/><Route path="/dashboard" element={<DashboardPage/>}/><Route path="/consultations" element={<ConsultationsPage/>}/><Route path="/consultations/new" element={<NewConsultationPage/>}/><Route path="/consultations/:id" element={<ConsultationDetailPage/>}/><Route path="/patients" element={<PatientsPage/>}/><Route path="/patients/:id" element={<PatientDetailPage/>}/><Route path="/clients" element={<ClientsPage/>}/><Route path="/clients/:id" element={<ClientDetailPage/>}/><Route path="/owner-summaries" element={<OwnerSummariesPage/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="/settings/practice" element={<RoleGate allowed={['practice_manager']}><PracticeSettingsPage/></RoleGate>}/><Route path="/settings/staff" element={<RoleGate allowed={['practice_manager']}><StaffPage/></RoleGate>}/><Route path="/settings/templates" element={<RoleGate allowed={['practice_manager']}><TemplatesPage/></RoleGate>}/><Route path="/settings/privacy" element={<RoleGate allowed={['practice_manager']}><PrivacyPage/></RoleGate>}/><Route path="/settings/audit" element={<RoleGate allowed={['practice_manager']}><AuditPage/></RoleGate>}/><Route path="/admin" element={<RoleGate allowed={['super_admin']}><AdminPage/></RoleGate>}/><Route path="/admin/practices" element={<RoleGate allowed={['super_admin']}><AdminPage/></RoleGate>}/><Route path="/admin/practices/:id" element={<RoleGate allowed={['super_admin']}><AdminPage/></RoleGate>}/><Route path="*" element={<NotFoundPage/>}/></Route></Routes></BrowserRouter>}
+
+import { AppStateProvider } from "./lib/AppState";
+
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
+
+// Layout
+
+import { AppShell } from "./components/layout/AppShell";
+
+
+// Public Pages
+
+import { LandingPage } from "./pages/LandingPage";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+
+
+// Dashboard Pages
+
+import { DashboardPage } from "./pages/DashboardPage";
+import { ConsultationsPage } from "./pages/ConsultationsPage";
+import { PatientsPage } from "./pages/PatientsPage";
+import { ClientsPage } from "./pages/ClientsPage";
+import { OwnerSummariesPage } from "./pages/OwnerSummariesPage";
+
+
+// Settings
+
+import { SettingsPage } from "./pages/SettingsPage";
+import { PracticeSettingsPage } from "./pages/PracticeSettingsPage";
+import { StaffPage } from "./pages/StaffPage";
+import { TemplatesPage } from "./pages/TemplatesPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { AuditPage } from "./pages/AuditPage";
+
+
+// Admin
+
+import { AdminPage } from "./pages/AdminPage";
+
+
+
+
+
+
+
+export function App(){
+
+
+
+return (
+
+<AppStateProvider>
+
+
+<BrowserRouter>
+
+
+<Routes>
+
+
+
+
+
+{/* =====================
+        PUBLIC ROUTES
+===================== */}
+
+
+
+<Route
+
+path="/"
+
+element={<LandingPage/>}
+
+/>
+
+
+
+<Route
+
+path="/login"
+
+element={<LoginPage/>}
+
+/>
+
+
+
+<Route
+
+path="/register"
+
+element={<RegisterPage/>}
+
+/>
+
+
+
+<Route
+
+path="/start-free-trial"
+
+element={<RegisterPage/>}
+
+/>
+
+
+
+<Route
+
+path="/forgot-password"
+
+element={<ForgotPasswordPage/>}
+
+/>
+
+
+
+
+
+
+
+
+
+{/* =====================
+       PROTECTED APP
+===================== */}
+
+
+
+<Route
+
+element={<ProtectedRoute/>}
+
+>
+
+
+<Route
+
+path="/dashboard"
+
+element={<AppShell/>}
+
+>
+
+
+
+
+
+{/* Dashboard */}
+
+
+<Route
+
+index
+
+element={<DashboardPage/>}
+
+/>
+
+
+
+
+
+{/* Core Vet Modules */}
+
+
+<Route
+
+path="consultations"
+
+element={<ConsultationsPage/>}
+
+/>
+
+
+
+<Route
+
+path="patients"
+
+element={<PatientsPage/>}
+
+/>
+
+
+
+<Route
+
+path="clients"
+
+element={<ClientsPage/>}
+
+/>
+
+
+
+<Route
+
+path="owner-summaries"
+
+element={<OwnerSummariesPage/>}
+
+/>
+
+
+
+
+
+
+
+
+
+{/* =====================
+        SETTINGS
+===================== */}
+
+
+
+
+<Route
+
+path="settings"
+
+element={<SettingsPage/>}
+
+/>
+
+
+
+
+
+<Route
+
+path="settings/practice"
+
+element={<PracticeSettingsPage/>}
+
+/>
+
+
+
+
+
+
+
+<Route
+
+element={
+
+<ProtectedRoute
+
+allowedRoles={[
+"practice_manager",
+"super_admin"
+]}
+
+/>
+
+}
+
+>
+
+
+<Route
+
+path="settings/staff"
+
+element={<StaffPage/>}
+
+/>
+
+
+</Route>
+
+
+
+
+
+
+
+<Route
+
+element={
+
+<ProtectedRoute
+
+allowedRoles={[
+"practice_manager",
+"super_admin"
+]}
+
+/>
+
+}
+
+>
+
+
+<Route
+
+path="settings/templates"
+
+element={<TemplatesPage/>}
+
+/>
+
+
+</Route>
+
+
+
+
+
+
+
+
+<Route
+
+element={
+
+<ProtectedRoute
+
+allowedRoles={[
+"practice_manager",
+"super_admin"
+]}
+
+/>
+
+}
+
+>
+
+
+<Route
+
+path="settings/privacy"
+
+element={<PrivacyPage/>}
+
+/>
+
+
+</Route>
+
+
+
+
+
+
+
+<Route
+
+element={
+
+<ProtectedRoute
+
+allowedRoles={[
+"practice_manager",
+"super_admin"
+]}
+
+/>
+
+}
+
+>
+
+
+<Route
+
+path="settings/audit"
+
+element={<AuditPage/>}
+
+/>
+
+
+</Route>
+
+
+
+
+
+
+
+
+
+
+{/* =====================
+        SUPER ADMIN
+===================== */}
+
+
+
+<Route
+
+element={
+
+<ProtectedRoute
+
+allowedRoles={[
+"super_admin"
+]}
+
+/>
+
+}
+
+>
+
+
+<Route
+
+path="admin"
+
+element={<AdminPage/>}
+
+/>
+
+
+</Route>
+
+
+
+
+
+
+
+</Route>
+
+
+</Route>
+
+
+
+
+
+
+
+
+</Routes>
+
+
+</BrowserRouter>
+
+
+</AppStateProvider>
+
+
+);
+
+
+}

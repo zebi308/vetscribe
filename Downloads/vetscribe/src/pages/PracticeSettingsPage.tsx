@@ -1,6 +1,595 @@
-import { useState } from 'react'
-import { Card } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { Field, TextArea } from '../components/ui/Field'
-import { useAppState } from '../lib/AppState'
-export function PracticeSettingsPage(){const {practice,setPractice}=useAppState();const [p,setP]=useState(practice);const [saved,setSaved]=useState(false);return <div className="space-y-5"><div><h2 className="text-2xl font-bold">Practice settings</h2><p className="text-sm text-slate-500">Branding and practice configuration.</p></div><Card className="p-5"><h3 className="font-bold">Practice details</h3><div className="mt-4 grid gap-4 md:grid-cols-2"><Field label="Practice name" value={p.name} onChange={e=>setP({...p,name:e.target.value})}/><Field label="Phone" value={p.phone} onChange={e=>setP({...p,phone:e.target.value})}/><Field label="Email" type="email" value={p.email} onChange={e=>setP({...p,email:e.target.value})}/><div className="md:col-span-2"><TextArea label="Address" value={p.address} onChange={e=>setP({...p,address:e.target.value})}/></div></div></Card><Card className="p-5"><h3 className="font-bold">Branding</h3><label className="mt-4 block text-sm font-medium">Practice logo<input type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>setP({...p,logoUrl:String(r.result)});r.readAsDataURL(f)}}/></label><div className="mt-4 grid gap-4 md:grid-cols-2"><label className="text-sm font-medium">Primary colour<input type="color" value={p.primaryColor} onChange={e=>setP({...p,primaryColor:e.target.value})} className="mt-2 block h-11 w-full rounded border p-1"/></label><label className="text-sm font-medium">Secondary colour<input type="color" value={p.secondaryColor} onChange={e=>setP({...p,secondaryColor:e.target.value})} className="mt-2 block h-11 w-full rounded border p-1"/></label></div><div className="mt-4 rounded-xl border p-5"><p className="text-xs uppercase text-slate-400">Preview</p><div className="mt-3 flex items-center gap-3"><span className="h-10 w-10 overflow-hidden rounded-xl" style={{background:p.primaryColor}}>{p.logoUrl&&<img src={p.logoUrl} alt="Practice logo preview" className="h-full w-full object-cover"/>}</span><div><p className="font-bold">{p.name}</p><p className="text-sm text-slate-500">Practice-branded clinical documents</p></div></div></div></Card><Card className="p-5"><h3 className="font-bold">Practice configuration</h3><div className="mt-4 grid gap-4 md:grid-cols-2"><label className="text-sm font-medium">Retention period (years)<input type="number" min={1} defaultValue={5} className="mt-1.5 w-full rounded-lg border px-3 py-2.5"/></label><label className="text-sm font-medium">Default note template<select className="mt-1.5 w-full rounded-lg border px-3 py-2.5"><option>Structured clinical note (SOAP)</option></select></label></div></Card><div className="flex items-center justify-end gap-3">{saved&&<span className="text-sm text-emerald-700">Saved for this demo session.</span>}<Button onClick={()=>{setPractice(p);setSaved(true)}}>Save settings</Button></div></div>}
+import {
+  Building2,
+  Palette,
+  FileText,
+  Bot,
+  Save,
+  CheckCircle2
+} from "lucide-react";
+
+import { useState } from "react";
+
+
+
+export function PracticeSettingsPage(){
+
+
+const [saved,setSaved]=useState(false);
+
+
+
+function handleSave(){
+
+setSaved(true);
+
+
+setTimeout(()=>{
+
+setSaved(false);
+
+},2000);
+
+}
+
+
+
+
+
+return (
+
+<div className="space-y-8">
+
+
+
+
+
+{/* HEADER */}
+
+
+<div>
+
+
+<h1 className="text-3xl font-bold text-slate-900">
+
+Practice Settings
+
+</h1>
+
+
+<p className="mt-2 text-slate-500">
+
+Manage clinic details, branding and workflow preferences.
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+{/* PRACTICE DETAILS */}
+
+
+
+<section className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+shadow-sm
+">
+
+
+
+<div className="flex items-center gap-3">
+
+
+<div className="
+grid
+h-11
+w-11
+place-items-center
+rounded-xl
+bg-teal-50
+text-teal-600
+">
+
+<Building2 size={22}/>
+
+</div>
+
+
+
+<div>
+
+<h2 className="font-semibold text-lg">
+
+Practice Information
+
+</h2>
+
+
+<p className="text-sm text-slate-500">
+
+Basic clinic information
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div className="
+mt-6
+grid
+gap-5
+md:grid-cols-2
+">
+
+
+<div>
+
+<label className="text-sm font-medium">
+
+Practice Name
+
+</label>
+
+
+<input
+
+defaultValue="VetScribe Veterinary Practice"
+
+className="
+mt-2
+w-full
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+outline-none
+focus:border-teal-500
+"
+
+/>
+
+</div>
+
+
+
+
+
+<div>
+
+<label className="text-sm font-medium">
+
+Clinic Email
+
+</label>
+
+
+<input
+
+defaultValue="clinic@vetscribe.co.uk"
+
+className="
+mt-2
+w-full
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+outline-none
+focus:border-teal-500
+"
+
+/>
+
+</div>
+
+
+
+
+
+
+<div>
+
+<label className="text-sm font-medium">
+
+Phone Number
+
+</label>
+
+
+<input
+
+defaultValue="+44 7000 000000"
+
+className="
+mt-2
+w-full
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+"
+
+/>
+
+</div>
+
+
+
+
+
+<div>
+
+<label className="text-sm font-medium">
+
+Address
+
+</label>
+
+
+<input
+
+defaultValue="United Kingdom"
+
+className="
+mt-2
+w-full
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+"
+
+/>
+
+</div>
+
+
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+{/* BRANDING */}
+
+
+
+<section className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+shadow-sm
+">
+
+
+<div className="flex items-center gap-3">
+
+
+<div className="
+grid
+h-11
+w-11
+place-items-center
+rounded-xl
+bg-teal-50
+text-teal-600
+">
+
+<Palette size={22}/>
+
+</div>
+
+
+
+<h2 className="font-semibold text-lg">
+
+Branding
+
+</h2>
+
+
+</div>
+
+
+
+
+
+<div className="
+mt-6
+grid
+gap-5
+md:grid-cols-2
+">
+
+
+<div>
+
+<label className="text-sm font-medium">
+
+Primary Colour
+
+</label>
+
+
+<input
+
+type="color"
+
+defaultValue="#14b8a6"
+
+className="
+mt-2
+h-12
+w-full
+rounded-xl
+border
+"
+
+/>
+
+</div>
+
+
+
+
+
+<div>
+
+<label className="text-sm font-medium">
+
+Logo URL
+
+</label>
+
+
+<input
+
+placeholder="https://..."
+
+className="
+mt-2
+w-full
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+"
+
+/>
+
+</div>
+
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+{/* AI SETTINGS */}
+
+
+
+<section className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+shadow-sm
+">
+
+
+<div className="flex items-center gap-3">
+
+
+<div className="
+grid
+h-11
+w-11
+place-items-center
+rounded-xl
+bg-teal-50
+text-teal-600
+">
+
+<Bot size={22}/>
+
+</div>
+
+
+
+<h2 className="font-semibold text-lg">
+
+AI Consultation Settings
+
+</h2>
+
+
+</div>
+
+
+
+
+
+
+
+<div className="mt-6 space-y-4">
+
+
+
+<div className="
+rounded-xl
+bg-slate-50
+p-4
+">
+
+<p className="font-medium">
+
+Generate SOAP notes automatically
+
+</p>
+
+
+<p className="text-sm text-slate-500">
+
+AI prepares structured clinical documentation.
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div className="
+rounded-xl
+bg-slate-50
+p-4
+">
+
+<p className="font-medium">
+
+Create owner summaries
+
+</p>
+
+
+<p className="text-sm text-slate-500">
+
+Convert clinical notes into easy owner communication.
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+
+
+{/* SAVE */}
+
+
+
+<button
+
+onClick={handleSave}
+
+className="
+flex
+items-center
+gap-2
+rounded-xl
+bg-teal-600
+px-6
+py-3
+font-semibold
+text-white
+hover:bg-teal-700
+"
+
+>
+
+
+{
+
+saved
+
+?
+
+<>
+
+<CheckCircle2 size={18}/>
+
+Saved
+
+</>
+
+:
+
+<>
+
+<Save size={18}/>
+
+Save Changes
+
+</>
+
+}
+
+
+
+</button>
+
+
+
+
+
+
+
+</div>
+
+);
+
+
+}

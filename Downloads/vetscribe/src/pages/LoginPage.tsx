@@ -1,12 +1,440 @@
-import { useState, type FormEvent } from 'react'
-import { Navigate, Link } from 'react-router-dom'
-import { HeartPulse, LockKeyhole } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Field } from '../components/ui/Field'
-import { Card } from '../components/ui/Card'
-import { useAppState } from '../lib/AppState'
-import { isSupabaseConfigured, supabase } from '../lib/supabase/client'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-export function LoginPage(){ const {currentUser,loginDemo,loginProduction}=useAppState(); const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(false); if(currentUser)return <Navigate to="/dashboard" replace/>;
- async function submit(e:FormEvent){e.preventDefault();setError('');if(!supabase){setError('Supabase is not configured. Use Demo Mode or add environment variables.');return} setLoading(true);const {error}=await supabase.auth.signInWithPassword({email,password});setLoading(false);if(error)setError(error.message);else {try{await loginProduction()}catch(e){setError(e instanceof Error?e.message:'Could not load practice membership')}}}
- return <div className="grid min-h-screen place-items-center bg-slate-50 p-4"><Card className="w-full max-w-md p-7"><div className="mb-7"><div className="flex items-center gap-2 text-2xl font-bold"><span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-700 text-white"><HeartPulse/></span>VetScribe</div><h1 className="mt-6 text-2xl font-bold">Sign in to your practice</h1><p className="mt-2 text-sm text-slate-500">Clinical documentation for independent UK veterinary practices.</p></div><form onSubmit={submit} className="space-y-4"><Field label="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email"/><Field label="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password"/>{error&&<div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}<Button className="w-full" disabled={loading}>{loading?'Signing in…':'Sign in'}</Button></form><div className="mt-3 text-center"><Link to="/forgot-password" className="text-sm text-brand-700 hover:underline">Forgot password?</Link></div><div className="my-6 flex items-center gap-3 text-xs text-slate-400"><div className="h-px flex-1 bg-slate-200"/>DEMO<div className="h-px flex-1 bg-slate-200"/></div><Button variant="secondary" className="w-full" onClick={loginDemo}><LockKeyhole size={17}/>Use demo practice</Button><p className="mt-4 text-xs leading-5 text-slate-500">Demo data is fictional. VetScribe is a documentation assistant; veterinary professionals remain responsible for reviewing and approving clinical records.</p><p className="mt-2 text-[11px] text-slate-400">Supabase configured: {isSupabaseConfigured?'Yes':'No — demo still works'}</p></Card></div> }
+import {
+  Lock,
+  Mail,
+  LogIn,
+  PawPrint
+} from "lucide-react";
+
+import { useAppState } from "../lib/AppState";
+
+
+
+
+export function LoginPage(){
+
+
+const navigate = useNavigate();
+
+
+const {
+login
+}=useAppState();
+
+
+
+const [email,setEmail]=useState("");
+
+const [password,setPassword]=useState("");
+
+const [error,setError]=useState("");
+
+const [loading,setLoading]=useState(false);
+
+
+
+
+
+
+
+async function handleLogin(
+e:React.FormEvent
+){
+
+e.preventDefault();
+
+
+setError("");
+
+setLoading(true);
+
+
+
+try{
+
+
+const success =
+await login(
+email,
+password
+);
+
+
+
+if(success){
+
+navigate("/dashboard");
+
+}
+
+else{
+
+setError(
+"Invalid email or password"
+);
+
+}
+
+
+
+}
+
+catch(err:any){
+
+
+console.error(err);
+
+
+setError(
+err.message || "Login failed"
+);
+
+
+}
+
+finally{
+
+
+setLoading(false);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+return (
+
+<div className="
+min-h-screen
+flex
+items-center
+justify-center
+bg-slate-50
+px-4
+">
+
+
+<div className="
+w-full
+max-w-md
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-8
+shadow-sm
+">
+
+
+<div className="flex justify-center">
+
+<div className="
+grid
+h-14
+w-14
+place-items-center
+rounded-xl
+bg-teal-600
+text-white
+">
+
+<PawPrint size={28}/>
+
+</div>
+
+</div>
+
+
+
+
+
+<h1 className="
+mt-6
+text-center
+text-3xl
+font-bold
+text-slate-900
+">
+
+Welcome Back
+
+</h1>
+
+
+
+<p className="
+mt-2
+text-center
+text-sm
+text-slate-500
+">
+
+Sign in to your VetScribe account
+
+</p>
+
+
+
+
+
+
+
+
+<form
+
+onSubmit={handleLogin}
+
+className="
+mt-8
+space-y-5
+"
+
+>
+
+
+
+
+
+
+<div>
+
+
+<label className="
+text-sm
+font-medium
+text-slate-700
+">
+
+Email Address
+
+</label>
+
+
+<div className="
+mt-2
+flex
+items-center
+gap-3
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+">
+
+
+<Mail size={18} className="text-slate-400"/>
+
+
+<input
+
+type="email"
+
+required
+
+value={email}
+
+onChange={(e)=>setEmail(e.target.value)}
+
+className="w-full outline-none"
+
+placeholder="doctor@clinic.com"
+
+/>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div>
+
+
+<label className="
+text-sm
+font-medium
+text-slate-700
+">
+
+Password
+
+</label>
+
+
+
+<div className="
+mt-2
+flex
+items-center
+gap-3
+rounded-xl
+border
+border-slate-200
+px-4
+py-3
+">
+
+
+<Lock size={18} className="text-slate-400"/>
+
+
+<input
+
+type="password"
+
+required
+
+value={password}
+
+onChange={(e)=>setPassword(e.target.value)}
+
+className="w-full outline-none"
+
+placeholder="••••••••"
+
+/>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+{
+error &&
+
+<p className="text-sm text-red-600">
+
+{error}
+
+</p>
+
+}
+
+
+
+
+
+
+
+
+<button
+
+type="submit"
+
+disabled={loading}
+
+className="
+flex
+w-full
+items-center
+justify-center
+gap-2
+rounded-xl
+bg-teal-600
+py-3
+font-semibold
+text-white
+hover:bg-teal-700
+disabled:opacity-50
+"
+
+>
+
+<LogIn size={18}/>
+
+{
+loading
+?
+"Signing in..."
+:
+"Login"
+}
+
+
+</button>
+
+
+
+
+
+
+</form>
+
+
+
+
+
+
+
+
+<div className="
+mt-6
+flex
+justify-between
+text-sm
+">
+
+
+<Link
+to="/forgot-password"
+className="text-teal-600"
+>
+
+Forgot Password?
+
+</Link>
+
+
+
+<Link
+to="/register"
+className="text-teal-600"
+>
+
+Create Account
+
+</Link>
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+</div>
+
+);
+
+
+}

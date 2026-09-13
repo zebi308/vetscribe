@@ -1,9 +1,548 @@
-import { Link } from 'react-router-dom'
-import { ArrowRight, Clock3, FileCheck2, FileClock, Plus } from 'lucide-react'
-import { Card } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { StatusBadge } from '../components/ui/Badge'
-import { useAppState } from '../lib/AppState'
-import { formatTime, fullName } from '../lib/format'
-export function DashboardPage(){ const {currentUser,practice,consultations,patients,clients,profiles}=useAppState(); const approved=consultations.filter(c=>c.status==='approved').length; const drafts=consultations.filter(c=>c.status!=='approved').length; const metrics=[['Today\'s Consultations',consultations.length,Clock3],['Draft Notes',drafts,FileClock],['Completed Notes',approved,FileCheck2],['Estimated Time Saved','1h 24m',Clock3]] as const;
- return <div className="space-y-7"><div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-3xl font-bold tracking-tight">Good morning, {currentUser?.firstName}</h2><p className="mt-1 text-slate-600">Here's what's happening at {practice.name} today.</p></div><Link to="/consultations/new"><Button><Plus size={17}/>New Consultation</Button></Link></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(([label,value,Icon],i)=><Card key={label} className="p-5"><div className="flex items-start justify-between"><div><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p>{i===3&&<p className="mt-1 text-xs text-slate-400">Demo metric</p>}</div><span className="rounded-lg bg-brand-50 p-2 text-brand-700"><Icon size={20}/></span></div></Card>)}</div><Card><div className="flex items-center justify-between border-b px-5 py-4"><div><h3 className="font-semibold">Today's consultations</h3><p className="text-sm text-slate-500">Fictional demo schedule</p></div><Link to="/consultations" className="text-sm font-semibold text-brand-700">View all</Link></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>{['Time','Patient','Owner','Vet','Status','Action'].map(h=><th key={h} className="px-5 py-3 font-semibold">{h}</th>)}</tr></thead><tbody>{consultations.map(c=>{const p=patients.find(x=>x.id===c.patientId)!;const cl=clients.find(x=>x.id===c.clientId)!;const vet=profiles.find(x=>x.id===c.treatingVetId)!;return <tr key={c.id} className="border-t"><td className="px-5 py-4">{formatTime(c.consultationDate)}</td><td className="px-5 py-4 font-semibold">{p.name}</td><td className="px-5 py-4">{fullName(cl)}</td><td className="px-5 py-4">{fullName(vet)}</td><td className="px-5 py-4"><StatusBadge status={c.status}/></td><td className="px-5 py-4"><Link to={`/consultations/${c.id}`} className="inline-flex items-center gap-1 font-semibold text-brand-700">Open<ArrowRight size={15}/></Link></td></tr>})}</tbody></table></div></Card></div> }
+import {
+  Activity,
+  ClipboardCheck,
+  FileText,
+  PawPrint,
+  Users,
+  Clock,
+  ArrowRight,
+  CheckCircle2
+} from "lucide-react";
+
+import { useAppState } from "../lib/AppState";
+
+
+export function DashboardPage() {
+
+const {
+  practice
+} = useAppState();
+
+
+
+const stats = [
+  {
+    title:"Consultations Today",
+    value:"24",
+    icon:ClipboardCheck,
+    change:"+12% this week"
+  },
+  {
+    title:"AI Notes Generated",
+    value:"18",
+    icon:FileText,
+    change:"6 awaiting review"
+  },
+  {
+    title:"Active Patients",
+    value:"1,248",
+    icon:PawPrint,
+    change:"+34 this month"
+  },
+  {
+    title:"Practice Users",
+    value:"8",
+    icon:Users,
+    change:"Team members"
+  }
+];
+
+
+
+const consultations=[
+ {
+  patient:"Max",
+  type:"Golden Retriever",
+  status:"AI Note Ready",
+  time:"10:30 AM"
+ },
+ {
+  patient:"Bella",
+  type:"British Shorthair Cat",
+  status:"Recording",
+  time:"11:15 AM"
+ },
+ {
+  patient:"Charlie",
+  type:"Labrador",
+  status:"Approved",
+  time:"12:40 PM"
+ }
+];
+
+
+
+
+return (
+
+<div className="space-y-8">
+
+
+{/* HEADER */}
+
+<div>
+
+<h2 className="text-3xl font-bold text-slate-900">
+
+Good morning 👋
+
+</h2>
+
+
+<p className="mt-2 text-slate-500">
+
+Welcome back to {practice.name}. 
+Here is today's clinical overview.
+
+</p>
+
+</div>
+
+
+
+
+
+{/* STATS */}
+
+<div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+
+{
+stats.map((item)=>{
+
+const Icon=item.icon;
+
+
+return (
+
+<div
+
+key={item.title}
+
+className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+shadow-sm
+hover:shadow-md
+transition
+"
+
+>
+
+
+<div className="flex justify-between">
+
+
+<div>
+
+<p className="text-sm text-slate-500">
+
+{item.title}
+
+</p>
+
+
+<h3 className="mt-2 text-3xl font-bold text-slate-900">
+
+{item.value}
+
+</h3>
+
+
+<p className="mt-2 text-xs text-teal-600">
+
+{item.change}
+
+</p>
+
+</div>
+
+
+
+<div className="
+grid
+h-12
+w-12
+place-items-center
+rounded-xl
+bg-teal-50
+text-teal-600
+">
+
+<Icon size={24}/>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+)
+
+})
+
+}
+
+
+</div>
+
+
+
+
+
+
+{/* MAIN GRID */}
+
+<div className="grid gap-6 xl:grid-cols-3">
+
+
+
+
+
+{/* CONSULTATIONS */}
+
+<div className="
+xl:col-span-2
+rounded-2xl
+border
+bg-white
+border-slate-200
+p-6
+">
+
+
+<div className="flex items-center justify-between">
+
+
+<h3 className="text-xl font-semibold">
+
+Today's Consultations
+
+</h3>
+
+
+<button className="
+flex
+items-center
+gap-2
+text-sm
+font-medium
+text-teal-600
+">
+
+View all
+
+<ArrowRight size={16}/>
+
+</button>
+
+
+</div>
+
+
+
+
+
+<div className="mt-6 space-y-4">
+
+
+{
+consultations.map((item)=>(
+
+<div
+
+key={item.patient}
+
+className="
+flex
+items-center
+justify-between
+rounded-xl
+border
+border-slate-100
+p-4
+hover:bg-slate-50
+"
+
+>
+
+
+<div>
+
+<h4 className="font-semibold text-slate-900">
+
+{item.patient}
+
+</h4>
+
+
+<p className="text-sm text-slate-500">
+
+{item.type}
+
+</p>
+
+</div>
+
+
+
+<div className="text-right">
+
+
+<p className="text-sm font-medium text-slate-700">
+
+{item.time}
+
+</p>
+
+
+<span className="
+mt-1
+inline-flex
+items-center
+gap-1
+rounded-full
+bg-teal-50
+px-3
+py-1
+text-xs
+font-medium
+text-teal-700
+">
+
+<CheckCircle2 size={13}/>
+
+{item.status}
+
+</span>
+
+
+</div>
+
+
+</div>
+
+
+))
+
+}
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+{/* AI ACTIVITY */}
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+">
+
+
+<h3 className="text-xl font-semibold">
+
+AI Activity
+
+</h3>
+
+
+
+<div className="mt-6 space-y-5">
+
+
+<div className="flex gap-3">
+
+
+<div className="
+mt-1
+h-3
+w-3
+rounded-full
+bg-teal-500
+"/>
+
+
+<div>
+
+<p className="font-medium">
+
+Clinical note generated
+
+</p>
+
+
+<p className="text-sm text-slate-500">
+
+Max consultation completed
+
+</p>
+
+</div>
+
+
+</div>
+
+
+
+
+<div className="flex gap-3">
+
+
+<div className="
+mt-1
+h-3
+w-3
+rounded-full
+bg-blue-500
+"/>
+
+
+<div>
+
+<p className="font-medium">
+
+Recording processed
+
+</p>
+
+
+<p className="text-sm text-slate-500">
+
+8 minute consultation
+
+</p>
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div className="flex gap-3">
+
+
+<div className="
+mt-1
+h-3
+w-3
+rounded-full
+bg-green-500
+"/>
+
+
+<div>
+
+<p className="font-medium">
+
+Record approved
+
+</p>
+
+
+<p className="text-sm text-slate-500">
+
+Ready for patient history
+
+</p>
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+{/* QUICK ACTION */}
+
+<div className="
+rounded-2xl
+bg-slate-900
+p-8
+text-white
+flex
+items-center
+justify-between
+">
+
+
+<div>
+
+
+<h3 className="text-2xl font-bold">
+
+Start New Consultation
+
+</h3>
+
+
+<p className="mt-2 text-slate-300">
+
+Record consultation and let AI prepare clinical notes.
+
+</p>
+
+
+</div>
+
+
+
+<button className="
+rounded-xl
+bg-teal-500
+px-6
+py-3
+font-semibold
+text-white
+hover:bg-teal-400
+">
+
+New Consultation
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+);
+
+}

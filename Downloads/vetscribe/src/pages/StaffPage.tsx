@@ -1,7 +1,532 @@
-import { useState } from 'react'
-import { Card } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { useAppState } from '../lib/AppState'
-import { fullName } from '../lib/format'
-import type { Role } from '../types/models'
-export function StaffPage(){const {profiles,setProfiles,currentUser}=useAppState();const [msg,setMsg]=useState('');function change(id:string,role:Role){setProfiles(prev=>prev.map(p=>p.id===id?{...p,role}:p));setMsg('Role updated in demo session.')}function deactivate(id:string){if(id===currentUser?.id){setMsg('You cannot deactivate yourself.');return}setProfiles(prev=>prev.map(p=>p.id===id?{...p,isActive:false}:p));setMsg('Staff member deactivated in demo session.')}return <div className="space-y-5"><div><h2 className="text-2xl font-bold">Staff management</h2><p className="text-sm text-slate-500">Practice managers can manage roles and status. Clinical sign-off remains restricted to veterinary professionals.</p></div>{msg&&<div className="rounded-lg bg-slate-100 p-3 text-sm">{msg}</div>}<Card><div className="flex items-center justify-between border-b p-5"><h3 className="font-bold">Staff</h3><Button variant="secondary" onClick={()=>setMsg('Invite flow placeholder: connect transactional email before production use.')}>Invite staff</Button></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{['Name','Email','Role','Status','Last active','Actions'].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{profiles.map(p=><tr key={p.id} className="border-t"><td className="px-4 py-3 font-semibold">{fullName(p)}</td><td className="px-4 py-3">{p.email}</td><td className="px-4 py-3"><select value={p.role} onChange={e=>change(p.id,e.target.value as Role)} className="rounded border px-2 py-1"><option value="vet">Vet</option><option value="nurse">Nurse</option><option value="practice_manager">Practice manager</option></select></td><td className="px-4 py-3">{p.isActive?'Active':'Inactive'}</td><td className="px-4 py-3 text-slate-500">Demo session</td><td className="px-4 py-3"><button onClick={()=>deactivate(p.id)} className="font-semibold text-red-700">Deactivate</button></td></tr>)}</tbody></table></div></Card></div>}
+import {
+  Users,
+  UserPlus,
+  ShieldCheck,
+  Mail,
+  MoreHorizontal,
+  CheckCircle2
+} from "lucide-react";
+
+
+
+export function StaffPage(){
+
+
+
+const staff = [
+
+{
+name:"Dr. James Anderson",
+email:"james@vetscribe.co.uk",
+role:"Veterinarian",
+status:"Active"
+},
+
+
+{
+name:"Emily Carter",
+email:"emily@vetscribe.co.uk",
+role:"Veterinary Nurse",
+status:"Active"
+},
+
+
+{
+name:"Daniel Smith",
+email:"daniel@vetscribe.co.uk",
+role:"Practice Manager",
+status:"Active"
+},
+
+
+{
+name:"Sophie Wilson",
+email:"sophie@vetscribe.co.uk",
+role:"Reception",
+status:"Invited"
+}
+
+];
+
+
+
+
+
+
+return (
+
+<div className="space-y-8">
+
+
+
+
+
+{/* HEADER */}
+
+
+<div className="
+flex
+flex-col
+gap-4
+md:flex-row
+md:items-center
+md:justify-between
+">
+
+
+<div>
+
+
+<h1 className="text-3xl font-bold text-slate-900">
+
+Staff Management
+
+</h1>
+
+
+<p className="mt-2 text-slate-500">
+
+Manage veterinary team members and access permissions.
+
+</p>
+
+
+</div>
+
+
+
+
+<button
+
+className="
+flex
+items-center
+gap-2
+rounded-xl
+bg-teal-600
+px-5
+py-3
+font-semibold
+text-white
+hover:bg-teal-700
+"
+
+>
+
+<UserPlus size={18}/>
+
+Add Staff Member
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+{/* SUMMARY CARDS */}
+
+
+<div className="
+grid
+gap-5
+md:grid-cols-3
+">
+
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-5
+">
+
+
+<div className="
+flex
+items-center
+gap-3
+">
+
+<div className="
+grid
+h-10
+w-10
+place-items-center
+rounded-xl
+bg-teal-50
+text-teal-600
+">
+
+<Users size={20}/>
+
+</div>
+
+
+<div>
+
+<p className="text-sm text-slate-500">
+
+Total Staff
+
+</p>
+
+
+<p className="text-2xl font-bold">
+
+4
+
+</p>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-5
+">
+
+
+<div className="
+flex
+items-center
+gap-3
+">
+
+
+<div className="
+grid
+h-10
+w-10
+place-items-center
+rounded-xl
+bg-green-50
+text-green-600
+">
+
+<CheckCircle2 size={20}/>
+
+</div>
+
+
+<div>
+
+<p className="text-sm text-slate-500">
+
+Active Users
+
+</p>
+
+
+<p className="text-2xl font-bold">
+
+3
+
+</p>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-5
+">
+
+
+<div className="
+flex
+items-center
+gap-3
+">
+
+
+<div className="
+grid
+h-10
+w-10
+place-items-center
+rounded-xl
+bg-blue-50
+text-blue-600
+">
+
+<ShieldCheck size={20}/>
+
+</div>
+
+
+<div>
+
+<p className="text-sm text-slate-500">
+
+Roles
+
+</p>
+
+
+<p className="text-2xl font-bold">
+
+4
+
+</p>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+{/* STAFF LIST */}
+
+
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+shadow-sm
+overflow-hidden
+">
+
+
+
+<div className="
+border-b
+p-6
+">
+
+
+<h2 className="text-xl font-semibold">
+
+Team Members
+
+</h2>
+
+
+</div>
+
+
+
+
+
+
+<div className="divide-y">
+
+
+{
+
+staff.map((person)=>(
+
+
+<div
+
+key={person.email}
+
+className="
+flex
+flex-col
+gap-4
+p-6
+md:flex-row
+md:items-center
+md:justify-between
+hover:bg-slate-50
+"
+
+>
+
+
+<div className="flex items-center gap-4">
+
+
+<div className="
+grid
+h-12
+w-12
+place-items-center
+rounded-xl
+bg-teal-50
+text-teal-600
+">
+
+<Users size={22}/>
+
+</div>
+
+
+
+
+<div>
+
+
+<h3 className="font-semibold text-slate-900">
+
+{person.name}
+
+</h3>
+
+
+<p className="flex items-center gap-2 text-sm text-slate-500">
+
+<Mail size={14}/>
+
+{person.email}
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div className="flex items-center gap-4">
+
+
+<div>
+
+
+<p className="text-sm font-medium">
+
+{person.role}
+
+</p>
+
+
+<span className={`
+text-xs
+rounded-full
+px-3
+py-1
+
+${
+person.status==="Active"
+
+?
+
+"bg-green-50 text-green-700"
+
+:
+
+"bg-yellow-50 text-yellow-700"
+
+}
+
+`}>
+
+{person.status}
+
+</span>
+
+
+</div>
+
+
+
+
+
+<button
+
+className="
+rounded-lg
+p-2
+hover:bg-slate-100
+"
+
+>
+
+<MoreHorizontal size={20}/>
+
+</button>
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+))
+
+
+}
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+);
+
+
+}
