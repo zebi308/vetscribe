@@ -1,46 +1,1433 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { CheckCircle2, Copy, FileDown, FileSpreadsheet, Mic, Pause, Pencil, Play, RotateCcw, Save, Square, WandSparkles } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Card } from '../components/ui/Card'
-import { Modal } from '../components/ui/Modal'
-import { StatusBadge } from '../components/ui/Badge'
-import { ClinicalNoteEditor } from '../components/clinical/ClinicalNoteEditor'
-import { MissingInfoPanel } from '../components/clinical/MissingInfoPanel'
-import { useAppState } from '../lib/AppState'
-import { ageYears, formatDate, formatDateTime, fullName } from '../lib/format'
-import { aiService } from '../lib/ai'
-import { demoTranscript } from '../lib/demoData'
-import { exportClinicalRecordPdf, exportOwnerSummaryPdf } from '../lib/pdf/exportPdf'
-import { exportClinicalCsv } from '../lib/csv/exportCsv'
-import { TextArea } from '../components/ui/Field'
-import type { ClinicalDraft } from '../types/models'
+import {
+  useEffect,
+  useRef,
+  useState
+} from "react";
+
+import {
+  useParams
+} from "react-router-dom";
+
+
+import {
+  CheckCircle2,
+  Mic,
+  Pause,
+  Play,
+  Save,
+  Square,
+  WandSparkles
+} from "lucide-react";
+
+
+import { Card } from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+
+
+import { useAppState } from "../lib/AppState";
+
+
+import {
+  ageYears,
+  fullName,
+  formatDate
+} from "../lib/format";
+
+
+import {
+  aiService
+} from "../lib/ai";
+
+
+import {
+  demoTranscript
+} from "../lib/demoData";
+
+
+import {
+  ClinicalNoteEditor
+} from "../components/clinical/ClinicalNoteEditor";
+
+
+import {
+  MissingInfoPanel
+} from "../components/clinical/MissingInfoPanel";
+
+
+import type {
+  ClinicalDraft,
+  Consultation
+} from "../types/models";
+
+
+
+
 
 export function ConsultationDetailPage(){
- const {id=''}=useParams(); const s=useAppState(); const c=s.consultations.find(x=>x.id===id); const p=c?s.patients.find(x=>x.id===c.patientId):undefined; const client=c?s.clients.find(x=>x.id===c.clientId):undefined; const vet=c?s.profiles.find(x=>x.id===c.treatingVetId):undefined; const approver=c?.approvedBy?s.profiles.find(x=>x.id===c.approvedBy):undefined; const summary=s.ownerSummaries.find(x=>x.consultationId===id); const versions=s.versions.filter(v=>v.clinicalNoteId===id).sort((a,b)=>b.versionNumber-a.versionNumber)
- const [draft,setDraft]=useState<ClinicalDraft|undefined>(c?.clinicalNote); const [editingSummary,setEditingSummary]=useState(false); const [amendmentReason,setAmendmentReason]=useState(''); const [error,setError]=useState(''); const [approvalOpen,setApprovalOpen]=useState(false); const [recording,setRecording]=useState(false); const [paused,setPaused]=useState(false); const [seconds,setSeconds]=useState(0); const [processing,setProcessing]=useState(false)
- const recorder=useRef<MediaRecorder|null>(null); const chunks=useRef<BlobPart[]>([]); const timer=useRef<number|undefined>(undefined)
- useEffect(()=>{setDraft(c?.clinicalNote)},[c?.clinicalNote])
- useEffect(()=>()=>{if(timer.current)window.clearInterval(timer.current)},[])
- if(!c||!p||!client||!vet)return <Card className="p-8">Consultation not found.</Card>
- const mm=String(Math.floor(seconds/60)).padStart(2,'0'), ss=String(seconds%60).padStart(2,'0')
- async function startRecording(){setError('');try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const r=new MediaRecorder(stream);chunks.current=[];r.ondataavailable=e=>{if(e.data.size)chunks.current.push(e.data)};r.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(chunks.current,{type:r.mimeType||'audio/webm'});setProcessing(true);s.updateConsultation(id,{status:'transcribing',durationSeconds:seconds,endedAt:new Date().toISOString()});try{const text=await aiService.transcribe(blob);s.updateConsultation(id,{transcript:text,status:'draft'});}catch(e){setError(e instanceof Error?e.message:'We could not transcribe this recording. Your consultation has not been lost.');s.updateConsultation(id,{status:'draft'})}finally{setProcessing(false)}};r.start();recorder.current=r;setRecording(true);setSeconds(0);s.updateConsultation(id,{startedAt:new Date().toISOString(),status:'draft'});timer.current=window.setInterval(()=>setSeconds(x=>x+1),1000)}catch{setError('Microphone access was unavailable. You can use the clearly marked demo consultation instead.')}}
- function pauseResume(){const r=recorder.current;if(!r)return;if(r.state==='recording'){r.pause();setPaused(true)}else if(r.state==='paused'){r.resume();setPaused(false)}}
- function stopRecording(){if(timer.current)window.clearInterval(timer.current);recorder.current?.stop();setRecording(false);setPaused(false)}
- function useDemo(){setError('');s.updateConsultation(id,{transcript:demoTranscript,durationSeconds:222,status:'draft',captureType:'audio'})}
- async function generate(){setError('');setProcessing(true);s.updateConsultation(id,{status:'generating'});try{const note=await aiService.generateClinicalNote({transcript:c!.transcript,patient:p!});setDraft(note);s.saveDraft(id,note)}catch(e){setError(e instanceof Error?e.message:'We could not generate the clinical note. You can retry or enter the note manually.');s.updateConsultation(id,{status:'draft'})}finally{setProcessing(false)}}
- async function approve(){if(!draft)return;setError('');try{await s.approveConsultation(id,draft,c!.version>0?amendmentReason:undefined);const generated=await aiService.generateOwnerSummary({clinicalNote:draft,patient:p!,consultationId:id,practiceId:s.practice.id,clientId:client!.id,generatedBy:s.currentUser!.id});s.addOwnerSummary(generated);setApprovalOpen(false)}catch(e){setError(e instanceof Error?e.message:'Approval failed')}}
- const isApproved=c.status==='approved'
- return <div className="space-y-5 pb-24"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-3"><h2 className="text-2xl font-bold">{p.name}</h2><StatusBadge status={c.status}/></div><p className="mt-1 text-slate-600">{p.breed} · {p.sex} · {p.neutered?'Neutered':'Not neutered'} · {ageYears(p.dateOfBirth)} years · {p.weightKg} kg</p><p className="text-sm text-slate-500">Owner: <Link className="font-semibold text-brand-700" to={`/clients/${client.id}`}>{fullName(client)}</Link> · Treating vet: {fullName(vet)} · {formatDate(c.consultationDate)}</p></div>{isApproved&&draft&&<div className="flex gap-2"><Button variant="secondary" onClick={()=>exportClinicalRecordPdf({practiceName:s.practice.name,patientName:p.name,clientName:fullName(client),date:formatDate(c.consultationDate),vetName:fullName(vet),note:draft,approvedBy:approver?fullName(approver):'Unknown',version:c.version})}><FileDown size={17}/>Export PDF</Button><Button variant="secondary" onClick={()=>exportClinicalCsv({patient:p.name,client:fullName(client),consultationDate:formatDate(c.consultationDate),treatingVet:fullName(vet),approvedBy:approver?fullName(approver):'Unknown',version:c.version,note:draft})}><FileSpreadsheet size={17}/>Export CSV</Button></div>}</div>
- {error&&<div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
- {!c.transcript&&!isApproved&&<Card className="p-6"><div className="text-center"><p className="text-sm font-semibold text-slate-500">Consultation recording</p><div className="mt-3 text-4xl font-bold tabular-nums">{mm}:{ss}</div><div className="mx-auto mt-5 flex h-14 max-w-xs items-end justify-center gap-1" aria-label={recording?'Recording is active':'Recording inactive'}>{Array.from({length:24}).map((_,i)=><span key={i} className={`wavebar w-1.5 rounded-full bg-brand-600 ${recording&&!paused?'':'!animate-none'}`} style={{height:`${10+(i%7)*5}px`,animationDelay:`${(i%5)*.08}s`}}/>)}</div><p className={`mt-4 text-sm font-semibold ${recording?'text-red-700':'text-slate-600'}`}>{recording?(paused?'Recording paused':'Recording is active'):'Start only when you are ready. No always-on listening.'}</p><div className="mt-5 flex flex-wrap justify-center gap-2">{!recording?<Button onClick={startRecording}><Mic size={18}/>Start recording</Button>:<><Button variant="secondary" onClick={pauseResume}>{paused?<Play size={17}/>:<Pause size={17}/>} {paused?'Resume':'Pause'}</Button><Button variant="danger" onClick={stopRecording}><Square size={17}/>Stop recording</Button></>}</div><div className="my-6 flex items-center gap-3 text-xs text-slate-400"><div className="h-px flex-1 bg-slate-200"/>DEMO MODE<div className="h-px flex-1 bg-slate-200"/></div><Button variant="secondary" onClick={useDemo}><WandSparkles size={17}/>Use demo consultation</Button><p className="mt-2 text-xs text-slate-500">Loads fictional consultation data for Max. It is not a real medical record.</p></div></Card>}
- {processing&&<Card className="p-8 text-center"><RotateCcw className="mx-auto animate-spin text-brand-700"/><p className="mt-3 font-semibold">{c.status==='transcribing'?'Transcribing consultation…':'Reviewing consultation…'}</p><p className="mt-1 text-sm text-slate-500">{c.status==='generating'?'Structuring clinical findings and preparing a draft record.':'Your consultation has not been lost.'}</p></Card>}
- {c.transcript&&!draft&&!processing&&!isApproved&&<Card className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-lg font-bold">Transcript</h3><p className="text-sm text-slate-500">Read the transcript before generating a structured draft.</p></div><Button onClick={generate}><WandSparkles size={17}/>Generate Clinical Note</Button></div><div className="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 text-sm leading-6 text-slate-700">{c.transcript}</div></Card>}
- {draft&&<><div className={`rounded-xl border p-4 ${isApproved?'border-emerald-200 bg-emerald-50':'border-amber-200 bg-amber-50'}`}>{isApproved?<div className="flex gap-3"><CheckCircle2 className="text-emerald-700"/><div><p className="font-bold text-emerald-900">Clinical record approved</p><p className="text-sm text-emerald-800">Approved by {approver?fullName(approver):'veterinary professional'} · {c.approvedAt?formatDateTime(c.approvedAt):''} · Version {c.version}</p>{s.currentUser?.role==='vet'&&draft&&<Button className="mt-3" variant="secondary" onClick={()=>{setDraft(structuredClone(draft));setAmendmentReason('');s.updateConsultation(id,{status:'awaiting_review'})}}>Create amendment</Button>}</div></div>:<><p className="font-bold text-amber-950">AI-generated draft — veterinary review required before approval.</p><p className="mt-1 text-sm text-amber-800">AI drafts. The vet decides. Every field below is editable.</p></>}</div>{!isApproved&&<MissingInfoPanel draft={draft} onChange={setDraft}/>}<ClinicalNoteEditor draft={draft} onChange={setDraft} readOnly={isApproved}/></>}
- {isApproved&&summary&&<Card className="p-5"><div className="flex flex-wrap justify-between gap-3"><div><h3 className="text-lg font-bold">Owner summary ready</h3><p className="text-sm text-slate-500">Generated separately from the approved clinical record in plain English.</p></div><div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={()=>setEditingSummary(x=>!x)}><Pencil size={16}/>{editingSummary?'Done editing':'Edit Summary'}</Button><Button variant="secondary" onClick={()=>navigator.clipboard.writeText([summary.title,summary.whatWeFound,summary.whatWeDiscussed,summary.treatmentAndMedication,summary.whatToDoAtHome,summary.whenToContactUs,summary.followUp].join('\n\n'))}><Copy size={16}/>Copy</Button><Button variant="secondary" onClick={()=>exportOwnerSummaryPdf(s.practice.name,summary)}><FileDown size={17}/>Export PDF</Button></div></div>{editingSummary?<div className="mt-5 grid gap-4 md:grid-cols-2"><TextArea label="What we found" value={summary.whatWeFound} onChange={e=>s.updateOwnerSummary(summary.id,{whatWeFound:e.target.value})}/><TextArea label="What we discussed" value={summary.whatWeDiscussed} onChange={e=>s.updateOwnerSummary(summary.id,{whatWeDiscussed:e.target.value})}/><TextArea label="Treatment and medication" value={summary.treatmentAndMedication} onChange={e=>s.updateOwnerSummary(summary.id,{treatmentAndMedication:e.target.value})}/><TextArea label="What to do at home" value={summary.whatToDoAtHome} onChange={e=>s.updateOwnerSummary(summary.id,{whatToDoAtHome:e.target.value})}/><TextArea label="When to contact us" value={summary.whenToContactUs} onChange={e=>s.updateOwnerSummary(summary.id,{whenToContactUs:e.target.value})}/><TextArea label="Follow-up" value={summary.followUp} onChange={e=>s.updateOwnerSummary(summary.id,{followUp:e.target.value})}/></div>:<div className="mt-5 grid gap-4 md:grid-cols-2">{[['What we found',summary.whatWeFound],['What we discussed',summary.whatWeDiscussed],['Treatment and medication',summary.treatmentAndMedication],['What to do at home',summary.whatToDoAtHome],['When to contact us',summary.whenToContactUs],['Follow-up',summary.followUp]].map(([a,b])=><div key={a}><h4 className="text-sm font-bold">{a}</h4><p className="mt-1 text-sm leading-6 text-slate-600">{b}</p></div>)}</div>}</Card>}
- {draft&&!isApproved&&c.version>0&&<Card className="p-5"><label className="block text-sm font-semibold text-slate-700">Amendment reason<input value={amendmentReason} onChange={e=>setAmendmentReason(e.target.value)} placeholder="e.g. Added follow-up instruction" className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"/></label><p className="mt-2 text-xs text-slate-500">A reason is required so the audit/version history explains why the approved record changed.</p></Card>}
- {versions.length>0&&<Card className="p-5"><h3 className="font-bold">Version history</h3><div className="mt-3 space-y-3">{versions.map(v=><div key={v.id} className="border-l-2 border-brand-200 pl-4"><p className="font-semibold">Version {v.versionNumber}</p><p className="text-sm text-slate-500">{v.changeReason} · {formatDateTime(v.createdAt)}</p></div>)}</div></Card>}
- {draft&&!isApproved&&<div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-white/95 p-3 shadow-lg backdrop-blur md:left-64"><div className="mx-auto flex max-w-7xl flex-wrap justify-end gap-2"><Button variant="secondary" onClick={()=>s.saveDraft(id,draft)}><Save size={17}/>Save Draft</Button>{s.currentUser?.role==='vet'?<Button onClick={()=>setApprovalOpen(true)}><CheckCircle2 size={17}/>Approve & Sign</Button>:<span className="self-center text-sm font-semibold text-amber-800">Veterinary surgeon approval required</span>}</div></div>}
- <Modal open={approvalOpen} title="Approve clinical record?" onClose={()=>setApprovalOpen(false)}><p className="text-sm leading-6 text-slate-600">By approving this record, you confirm that you have reviewed the AI-generated draft and that the final record accurately reflects the consultation to the best of your professional judgement.</p><div className="mt-5 flex justify-end gap-2"><Button variant="secondary" onClick={()=>setApprovalOpen(false)}>Cancel</Button><Button onClick={approve}>Review & Approve</Button></div></Modal>
- </div>
+
+
+const {
+  id
+}=useParams();
+
+
+
+const s =
+useAppState();
+
+
+
+
+
+const [draft,setDraft] =
+useState<ClinicalDraft | undefined>();
+
+
+const [error,setError] =
+useState("");
+
+
+
+const [processing,setProcessing] =
+useState(false);
+
+
+
+const [recording,setRecording] =
+useState(false);
+
+
+
+const [paused,setPaused] =
+useState(false);
+
+
+
+const [seconds,setSeconds] =
+useState(0);
+
+
+
+const [amendmentReason,setAmendmentReason] =
+useState("");
+
+
+
+const [approvalOpen,setApprovalOpen] =
+useState(false);
+
+
+
+
+
+const recorder =
+useRef<MediaRecorder | null>(null);
+
+
+
+const chunks =
+useRef<Blob[]>([]);
+
+
+
+const timer =
+useRef<number | null>(null);
+
+
+
+
+
+
+
+
+
+const foundConsultation =
+s.consultations.find(
+item=>item.id===id
+);
+
+
+if(!foundConsultation){
+
+return (
+
+<Card className="p-6">
+
+Consultation not found.
+
+</Card>
+
+);
+
+}
+
+
+const consultation: Consultation = foundConsultation;
+
+
+
+
+
+
+
+const foundPatient =
+s.patients.find(
+item=>item.id===consultation.patientId
+);
+
+
+if(!foundPatient){
+
+return (
+
+<Card className="p-6">
+
+Patient not found.
+
+</Card>
+
+);
+
+}
+
+
+const patient = foundPatient;
+
+
+
+
+const client =
+s.clients.find(
+item=>item.id===consultation.clientId
+);
+
+
+
+
+
+const vet =
+s.profiles.find(
+item=>item.id===consultation.treatingVetId
+);
+
+
+
+
+
+
+useEffect(()=>{
+
+
+setDraft(
+consultation.clinicalNote
+);
+
+
+},[
+consultation.clinicalNote
+]);
+
+
+
+
+
+
+useEffect(()=>{
+
+
+return ()=>{
+
+
+if(timer.current){
+
+window.clearInterval(
+timer.current
+);
+
+}
+
+
+};
+
+
+},[]);
+
+
+
+
+
+
+
+
+
+if(!patient || !client || !s.practice){
+
+return (
+
+<Card className="p-6">
+
+Loading consultation data...
+
+</Card>
+
+);
+
+}
+
+
+
+
+
+
+
+
+const minutes =
+String(
+Math.floor(seconds/60)
+)
+.padStart(2,"0");
+
+
+
+const secs =
+String(
+seconds%60
+)
+.padStart(2,"0");
+
+
+
+
+
+
+
+
+async function startRecording(){
+
+
+try{
+
+
+setError("");
+
+
+
+const stream =
+await navigator.mediaDevices.getUserMedia({
+
+audio:true
+
+});
+
+
+
+
+
+const media =
+new MediaRecorder(stream);
+
+
+
+chunks.current=[];
+
+
+
+
+media.ondataavailable =
+event=>{
+
+
+if(event.data.size){
+
+chunks.current.push(
+event.data
+);
+
+}
+
+
+};
+
+
+
+
+
+media.onstop =
+async ()=>{
+
+
+stream
+.getTracks()
+.forEach(
+track=>track.stop()
+);
+
+
+
+
+
+const audio =
+new Blob(
+chunks.current,
+{
+type:"audio/webm"
+}
+);
+
+
+
+
+
+setProcessing(true);
+
+
+
+
+
+try{
+
+
+const transcript =
+await aiService.transcribe(
+audio
+);
+
+
+
+await s.updateConsultation(
+
+consultation.id,
+
+{
+
+transcript,
+
+durationSeconds:seconds,
+
+captureType:"audio"
+
+}
+
+);
+
+
+
+}
+
+catch(e){
+
+
+setError(
+"Transcription failed"
+);
+
+
+}
+
+
+finally{
+
+
+setProcessing(false);
+
+
+}
+
+
+};
+
+
+
+
+
+
+media.start();
+
+
+
+recorder.current =
+media;
+
+
+
+
+setRecording(true);
+
+
+
+setSeconds(0);
+
+
+
+
+timer.current =
+window.setInterval(()=>{
+
+
+setSeconds(
+old=>old+1
+);
+
+
+},1000);
+
+
+
+
+
+}
+
+catch{
+
+
+setError(
+"Microphone permission denied"
+);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+async function stopRecording(){
+
+
+if(timer.current){
+
+window.clearInterval(
+timer.current
+);
+
+}
+
+
+
+recorder.current?.stop();
+
+
+
+setRecording(false);
+
+setPaused(false);
+
+
+
+}
+function togglePause(){
+
+
+const current =
+recorder.current;
+
+
+
+if(!current)
+
+return;
+
+
+
+if(current.state==="recording"){
+
+
+current.pause();
+
+setPaused(true);
+
+
+}
+
+else if(current.state==="paused"){
+
+
+current.resume();
+
+setPaused(false);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function useDemoTranscript(){
+
+
+await s.updateConsultation(
+
+consultation.id,
+
+{
+
+transcript:demoTranscript,
+
+captureType:"typed"
+
+}
+
+);
+
+
+}
+
+
+
+
+
+
+
+
+
+async function generateNote(){
+
+
+if(!consultation.transcript){
+
+setError(
+"No transcript available"
+);
+
+return;
+
+}
+
+
+
+try{
+
+
+setProcessing(true);
+
+
+
+const result =
+await aiService.generateClinicalNote({
+
+transcript:
+consultation.transcript,
+
+patient
+
+});
+
+
+
+
+
+setDraft(result);
+
+
+
+
+
+await s.saveDraft(
+
+consultation.id,
+
+result
+
+);
+
+
+
+
+
+}
+
+catch(e){
+
+
+console.error(e);
+
+
+setError(
+"Unable to generate clinical note"
+);
+
+
+
+}
+
+finally{
+
+
+setProcessing(false);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function saveClinicalDraft(){
+
+
+
+if(!draft)
+
+return;
+
+
+
+await s.saveDraft(
+
+consultation.id,
+
+draft
+
+);
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function approve(){
+
+
+
+if(!draft){
+
+setError(
+"No clinical note to approve"
+);
+
+return;
+
+}
+
+
+
+
+
+if(!patient || !client || !s.practice || !s.currentUser){
+
+setError(
+"Missing required data"
+);
+
+
+return;
+
+}
+
+
+
+
+
+try{
+
+
+setProcessing(true);
+
+
+
+
+
+await s.approveConsultation(
+
+consultation.id,
+
+draft,
+
+consultation.version > 0
+
+?
+
+amendmentReason
+
+:
+
+undefined
+
+);
+
+
+
+
+
+
+
+const generated =
+
+await aiService.generateOwnerSummary({
+
+clinicalNote:draft,
+
+patient,
+
+consultationId:consultation.id,
+
+practiceId:s.practice.id,
+
+clientId:client.id,
+
+generatedBy:s.currentUser.id
+
+});
+
+
+
+
+
+
+
+
+await s.addOwnerSummary(
+
+generated
+
+);
+
+
+
+
+
+setApprovalOpen(false);
+
+
+
+}
+
+catch(e){
+
+
+console.error(e);
+
+
+
+setError(
+
+e instanceof Error
+
+?
+
+e.message
+
+:
+
+"Approval failed"
+
+);
+
+
+
+}
+
+finally{
+
+
+setProcessing(false);
+
+
+}
+
+
+}
+return (
+
+<div className="space-y-5">
+
+
+<Card className="p-6">
+
+
+<div className="flex flex-wrap justify-between gap-4">
+
+
+<div>
+
+
+<h1 className="text-2xl font-bold">
+
+{patient.name}
+
+</h1>
+
+
+
+<p className="text-sm text-slate-500">
+
+{patient.breed}
+
+{" · "}
+
+{patient.sex}
+
+{" · "}
+
+{ageYears(patient.dateOfBirth)}
+
+years
+
+</p>
+
+
+
+<p className="mt-2 text-sm">
+
+Owner:
+
+{" "}
+
+<strong>
+
+{fullName(client)}
+
+</strong>
+
+</p>
+
+
+
+{
+vet &&
+
+<p className="text-sm text-slate-500">
+
+Vet:
+
+{" "}
+
+{fullName(vet)}
+
+</p>
+
+}
+
+
+</div>
+
+
+
+
+
+<div className="text-right">
+
+
+<p className="text-sm text-slate-500">
+
+Date
+
+</p>
+
+
+<p className="font-semibold">
+
+{formatDate(
+consultation.consultationDate
+)}
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+</Card>
+
+
+
+
+
+
+
+
+
+{
+error &&
+
+<Card className="border-red-200 bg-red-50 p-4 text-red-700">
+
+{error}
+
+</Card>
+
+}
+
+
+
+
+
+
+
+
+{
+!consultation.transcript &&
+
+<Card className="p-6">
+
+
+<h2 className="text-lg font-bold">
+
+Record Consultation
+
+</h2>
+
+
+
+
+<div className="mt-5 text-center">
+
+
+<p className="text-4xl font-bold">
+
+{minutes}:{secs}
+
+</p>
+
+
+
+<div className="mt-5 flex justify-center gap-3">
+
+
+{
+
+!recording
+
+?
+
+<Button
+onClick={startRecording}
+>
+
+<Mic size={18}/>
+
+Start Recording
+
+</Button>
+
+
+:
+
+<>
+
+
+<Button
+
+variant="secondary"
+
+onClick={togglePause}
+
+>
+
+
+{
+
+paused
+
+?
+
+<Play size={18}/>
+
+:
+
+<Pause size={18}/>
+
+}
+
+
+
+</Button>
+
+
+
+
+<Button
+
+variant="danger"
+
+onClick={stopRecording}
+
+>
+
+
+<Square size={18}/>
+
+Stop
+
+
+</Button>
+
+
+
+</>
+
+}
+
+
+
+</div>
+
+
+
+
+
+
+<div className="mt-4">
+
+
+<Button
+
+variant="secondary"
+
+onClick={useDemoTranscript}
+
+>
+
+<WandSparkles size={18}/>
+
+Use Demo Transcript
+
+</Button>
+
+
+</div>
+
+
+
+</div>
+
+
+</Card>
+
+}
+
+
+
+
+
+
+
+
+
+{
+processing &&
+
+<Card className="p-5 text-center">
+
+Processing...
+
+</Card>
+
+}
+
+
+
+
+
+
+
+
+
+{
+consultation.transcript &&
+
+<Card className="p-6">
+
+
+<div className="flex justify-between">
+
+
+<h2 className="font-bold">
+
+Transcript
+
+</h2>
+
+
+
+
+{
+
+!draft &&
+
+<Button
+
+onClick={generateNote}
+
+>
+
+Generate Clinical Note
+
+</Button>
+
+}
+
+
+</div>
+
+
+
+
+<p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
+
+{consultation.transcript}
+
+</p>
+
+
+</Card>
+
+}
+
+
+
+
+
+
+
+
+
+{
+draft &&
+
+<Card className="p-6">
+
+
+<div className="flex justify-between">
+
+
+<h2 className="text-xl font-bold">
+
+Clinical Note
+
+</h2>
+
+
+
+<Button
+
+variant="secondary"
+
+onClick={saveClinicalDraft}
+
+>
+
+<Save size={17}/>
+
+Save Draft
+
+</Button>
+
+
+</div>
+
+
+
+
+
+<div className="mt-5">
+
+
+<MissingInfoPanel
+
+draft={draft}
+
+onChange={setDraft}
+
+/>
+
+
+
+<ClinicalNoteEditor
+
+draft={draft}
+
+onChange={setDraft}
+
+readOnly={
+consultation.status==="approved"
+}
+
+/>
+
+
+
+</div>
+
+
+
+
+
+
+
+{
+
+consultation.status!=="approved"
+
+&&
+
+<div className="mt-6 flex justify-end">
+
+
+<Button
+
+onClick={()=>setApprovalOpen(true)}
+
+>
+
+<CheckCircle2 size={17}/>
+
+Approve Consultation
+
+</Button>
+
+
+</div>
+
+}
+
+
+</Card>
+
+}
+
+
+
+
+
+
+
+
+
+{
+
+approvalOpen &&
+
+<Card className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+
+
+<div className="w-full max-w-md rounded-xl bg-white p-6">
+
+
+<h3 className="text-xl font-bold">
+
+Approve Consultation
+
+</h3>
+
+
+
+
+<p className="mt-3 text-sm text-slate-600">
+
+This will lock the clinical record and generate the owner summary.
+
+</p>
+
+
+
+
+
+<textarea
+
+value={amendmentReason}
+
+onChange={
+e=>setAmendmentReason(
+e.target.value
+)
+}
+
+placeholder="Amendment reason (optional)"
+
+className="
+mt-4
+w-full
+rounded-lg
+border
+p-3
+"
+
+/>
+
+
+
+
+
+<div className="mt-5 flex justify-end gap-3">
+
+
+<Button
+
+variant="secondary"
+
+onClick={()=>setApprovalOpen(false)}
+
+>
+
+Cancel
+
+</Button>
+
+
+
+<Button
+
+onClick={approve}
+
+>
+
+Approve
+
+</Button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+</Card>
+
+}
+
+
+
+</div>
+
+);
+
+
 }

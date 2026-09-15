@@ -1,100 +1,108 @@
 import {
-  Activity,
-  ClipboardCheck,
-  FileText,
-  PawPrint,
   Users,
-  Clock,
-  ArrowRight,
-  CheckCircle2
+  PawPrint,
+  ClipboardList,
+  FileText
 } from "lucide-react";
+
+import { Card } from "../components/ui/Card";
 
 import { useAppState } from "../lib/AppState";
 
 
-export function DashboardPage() {
+
+export function DashboardPage(){
+
 
 const {
-  practice
-} = useAppState();
+
+practice,
+
+patients,
+
+clients,
+
+consultations,
+
+ownerSummaries
+
+}=useAppState();
+
+
+
+
+
+
+const todayConsultations =
+consultations.filter(c=>
+c.consultationDate.startsWith(
+new Date().toISOString().split("T")[0]
+)
+).length;
+
+
+
+
 
 
 
 const stats = [
-  {
-    title:"Consultations Today",
-    value:"24",
-    icon:ClipboardCheck,
-    change:"+12% this week"
-  },
-  {
-    title:"AI Notes Generated",
-    value:"18",
-    icon:FileText,
-    change:"6 awaiting review"
-  },
-  {
-    title:"Active Patients",
-    value:"1,248",
-    icon:PawPrint,
-    change:"+34 this month"
-  },
-  {
-    title:"Practice Users",
-    value:"8",
-    icon:Users,
-    change:"Team members"
-  }
+
+{
+title:"Patients",
+value:patients.length,
+icon:PawPrint
+},
+
+{
+title:"Clients",
+value:clients.length,
+icon:Users
+},
+
+{
+title:"Consultations",
+value:consultations.length,
+icon:ClipboardList
+},
+
+{
+title:"Owner Summaries",
+value:ownerSummaries.length,
+icon:FileText
+}
+
 ];
 
 
 
-const consultations=[
- {
-  patient:"Max",
-  type:"Golden Retriever",
-  status:"AI Note Ready",
-  time:"10:30 AM"
- },
- {
-  patient:"Bella",
-  type:"British Shorthair Cat",
-  status:"Recording",
-  time:"11:15 AM"
- },
- {
-  patient:"Charlie",
-  type:"Labrador",
-  status:"Approved",
-  time:"12:40 PM"
- }
-];
+
+
 
 
 
 
 return (
 
-<div className="space-y-8">
+<div className="space-y-6">
 
 
-{/* HEADER */}
 
 <div>
 
-<h2 className="text-3xl font-bold text-slate-900">
+<h2 className="text-2xl font-bold text-slate-900">
 
-Good morning 👋
+Welcome back
 
 </h2>
 
 
-<p className="mt-2 text-slate-500">
+<p className="mt-1 text-slate-500">
 
-Welcome back to {practice.name}. 
-Here is today's clinical overview.
+{practice?.name || "Veterinary Practice"}
 
 </p>
+
 
 </div>
 
@@ -102,38 +110,33 @@ Here is today's clinical overview.
 
 
 
-{/* STATS */}
 
-<div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+
+
+<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
 
 
 {
-stats.map((item)=>{
 
-const Icon=item.icon;
+stats.map(item=>{
+
+
+const Icon =
+item.icon;
+
 
 
 return (
 
-<div
-
+<Card
 key={item.title}
-
-className="
-rounded-2xl
-border
-border-slate-200
-bg-white
-p-6
-shadow-sm
-hover:shadow-md
-transition
-"
-
+className="p-5"
 >
 
 
-<div className="flex justify-between">
+<div className="flex items-center justify-between">
 
 
 <div>
@@ -145,18 +148,12 @@ transition
 </p>
 
 
-<h3 className="mt-2 text-3xl font-bold text-slate-900">
+<p className="mt-2 text-3xl font-bold text-slate-900">
 
 {item.value}
 
-</h3>
-
-
-<p className="mt-2 text-xs text-teal-600">
-
-{item.change}
-
 </p>
+
 
 </div>
 
@@ -164,26 +161,27 @@ transition
 
 <div className="
 grid
-h-12
-w-12
+h-10
+w-10
 place-items-center
 rounded-xl
 bg-teal-50
-text-teal-600
+text-teal-700
 ">
 
-<Icon size={24}/>
+<Icon size={22}/>
 
 </div>
 
 
-</div>
-
 
 </div>
 
+
+</Card>
 
 )
+
 
 })
 
@@ -197,322 +195,83 @@ text-teal-600
 
 
 
-{/* MAIN GRID */}
-
-<div className="grid gap-6 xl:grid-cols-3">
 
 
+<Card className="p-6">
 
 
+<h3 className="text-lg font-bold">
 
-{/* CONSULTATIONS */}
-
-<div className="
-xl:col-span-2
-rounded-2xl
-border
-bg-white
-border-slate-200
-p-6
-">
-
-
-<div className="flex items-center justify-between">
-
-
-<h3 className="text-xl font-semibold">
-
-Today's Consultations
+Today's activity
 
 </h3>
 
 
-<button className="
-flex
-items-center
-gap-2
-text-sm
-font-medium
-text-teal-600
-">
 
-View all
+<div className="mt-4 grid gap-4 md:grid-cols-3">
 
-<ArrowRight size={16}/>
 
-</button>
+<div>
 
+<p className="text-sm text-slate-500">
+
+Today's consultations
+
+</p>
+
+
+<p className="text-xl font-bold">
+
+{todayConsultations}
+
+</p>
 
 </div>
 
 
 
 
+<div>
 
-<div className="mt-6 space-y-4">
+<p className="text-sm text-slate-500">
 
+Approved records
+
+</p>
+
+
+<p className="text-xl font-bold">
 
 {
-consultations.map((item)=>(
-
-<div
-
-key={item.patient}
-
-className="
-flex
-items-center
-justify-between
-rounded-xl
-border
-border-slate-100
-p-4
-hover:bg-slate-50
-"
-
->
-
-
-<div>
-
-<h4 className="font-semibold text-slate-900">
-
-{item.patient}
-
-</h4>
-
-
-<p className="text-sm text-slate-500">
-
-{item.type}
-
-</p>
-
-</div>
-
-
-
-<div className="text-right">
-
-
-<p className="text-sm font-medium text-slate-700">
-
-{item.time}
-
-</p>
-
-
-<span className="
-mt-1
-inline-flex
-items-center
-gap-1
-rounded-full
-bg-teal-50
-px-3
-py-1
-text-xs
-font-medium
-text-teal-700
-">
-
-<CheckCircle2 size={13}/>
-
-{item.status}
-
-</span>
-
-
-</div>
-
-
-</div>
-
-
-))
-
+consultations.filter(
+c=>c.status==="approved"
+).length
 }
 
-
-</div>
-
+</p>
 
 
 </div>
 
 
-
-
-
-
-{/* AI ACTIVITY */}
-
-<div className="
-rounded-2xl
-border
-border-slate-200
-bg-white
-p-6
-">
-
-
-<h3 className="text-xl font-semibold">
-
-AI Activity
-
-</h3>
-
-
-
-<div className="mt-6 space-y-5">
-
-
-<div className="flex gap-3">
-
-
-<div className="
-mt-1
-h-3
-w-3
-rounded-full
-bg-teal-500
-"/>
 
 
 <div>
-
-<p className="font-medium">
-
-Clinical note generated
-
-</p>
-
 
 <p className="text-sm text-slate-500">
 
-Max consultation completed
-
-</p>
-
-</div>
-
-
-</div>
-
-
-
-
-<div className="flex gap-3">
-
-
-<div className="
-mt-1
-h-3
-w-3
-rounded-full
-bg-blue-500
-"/>
-
-
-<div>
-
-<p className="font-medium">
-
-Recording processed
+Draft records
 
 </p>
 
 
-<p className="text-sm text-slate-500">
+<p className="text-xl font-bold">
 
-8 minute consultation
-
-</p>
-
-</div>
-
-
-</div>
-
-
-
-
-
-<div className="flex gap-3">
-
-
-<div className="
-mt-1
-h-3
-w-3
-rounded-full
-bg-green-500
-"/>
-
-
-<div>
-
-<p className="font-medium">
-
-Record approved
-
-</p>
-
-
-<p className="text-sm text-slate-500">
-
-Ready for patient history
-
-</p>
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-{/* QUICK ACTION */}
-
-<div className="
-rounded-2xl
-bg-slate-900
-p-8
-text-white
-flex
-items-center
-justify-between
-">
-
-
-<div>
-
-
-<h3 className="text-2xl font-bold">
-
-Start New Consultation
-
-</h3>
-
-
-<p className="mt-2 text-slate-300">
-
-Record consultation and let AI prepare clinical notes.
+{
+consultations.filter(
+c=>c.status==="draft"
+).length
+}
 
 </p>
 
@@ -521,28 +280,21 @@ Record consultation and let AI prepare clinical notes.
 
 
 
-<button className="
-rounded-xl
-bg-teal-500
-px-6
-py-3
-font-semibold
-text-white
-hover:bg-teal-400
-">
+</div>
 
-New Consultation
 
-</button>
+
+</Card>
+
+
+
 
 
 
 </div>
 
-
-
-</div>
 
 );
+
 
 }

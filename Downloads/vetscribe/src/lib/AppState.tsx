@@ -13,9 +13,9 @@ import { supabase } from "./supabase/client";
 import {
   loadMembership,
   loadPracticeData,
-  loadAuditLogs
+  loadAuditLogs,
+  loadProfiles
 } from "./supabase/repository";
-
 
 
 import type {
@@ -27,9 +27,9 @@ import type {
   Medicine,
   OwnerSummary,
   ClinicalNoteVersion,
-  AuditLog
+  AuditLog,
+  ClinicalDraft
 } from "../types/models";
-
 
 
 
@@ -42,6 +42,9 @@ interface AppStateContextType {
 
   practice: Practice | null;
 
+
+
+  profiles: Profile[];
 
 
   clients: Client[];
@@ -79,6 +82,57 @@ interface AppStateContextType {
 
 
   refreshData():Promise<void>;
+
+
+
+
+
+  createConsultation(
+    patientId:string
+  ):string;
+
+
+
+  updateConsultation(
+    id:string,
+    changes:Partial<Consultation>
+  ):Promise<void>;
+
+
+
+  saveDraft(
+    id:string,
+    draft:ClinicalDraft
+  ):Promise<void>;
+
+
+
+  approveConsultation(
+    id:string,
+    draft:ClinicalDraft,
+    reason?:string
+  ):Promise<void>;
+
+
+
+  addOwnerSummary(
+    summary:OwnerSummary
+  ):Promise<void>;
+
+
+
+  updateOwnerSummary(
+    id:string,
+    changes:Partial<OwnerSummary>
+  ):Promise<void>;
+
+
+
+  addMedicine(
+    medicine:Medicine
+  ):Promise<void>;
+
+
 
 }
 
@@ -121,6 +175,11 @@ const [practice,setPractice]
 useState<Practice|null>(null);
 
 
+
+
+const [profiles,setProfiles]
+=
+useState<Profile[]>([]);
 
 
 
@@ -170,8 +229,6 @@ useState<AuditLog[]>([]);
 
 
 
-
-
 useEffect(()=>{
 
 restoreSession();
@@ -190,7 +247,9 @@ async function restoreSession(){
 
 
 if(!supabase)
+
 return;
+
 
 
 
@@ -204,22 +263,13 @@ await supabase.auth.getSession();
 
 
 
-console.log(
-"RESTORE SESSION",
-data.session
-);
-
-
-
 
 
 if(data.session?.user){
 
-
 await loadUser(
 data.session.user.id
 );
-
 
 }
 
@@ -238,16 +288,6 @@ data.session.user.id
 async function loadUser(
 authUserId:string
 ){
-
-
-
-console.log(
-"LOADING USER",
-authUserId
-);
-
-
-
 
 
 const membership =
@@ -269,8 +309,6 @@ membership.practice
 
 
 
-
-
 await loadAppData();
 
 
@@ -288,7 +326,6 @@ await loadAppData();
 async function loadAppData(){
 
 
-
 try{
 
 
@@ -302,9 +339,11 @@ data.clients
 );
 
 
+
 setPatients(
 data.patients
 );
+
 
 
 setConsultations(
@@ -312,9 +351,11 @@ data.consultations
 );
 
 
+
 setMedicines(
 data.medicines
 );
+
 
 
 setOwnerSummaries(
@@ -322,11 +363,10 @@ data.ownerSummaries
 );
 
 
+
 setVersions(
 data.versions
 );
-
-
 
 
 
@@ -341,8 +381,13 @@ logs
 
 
 
-console.log(
-"APP DATA LOADED"
+const allProfiles =
+await loadProfiles();
+
+
+
+setProfiles(
+allProfiles
 );
 
 
@@ -351,36 +396,25 @@ console.log(
 
 catch(error){
 
-
 console.error(
 "DATA LOAD ERROR",
 error
 );
 
-
-}
-
-
 }
 
 
 
-
-
-
-
-
-
+}
 async function login(
 email:string,
 password:string
-){
-
+):Promise<boolean>{
 
 
 if(!supabase)
-return false;
 
+return false;
 
 
 
@@ -391,7 +425,6 @@ data,
 error
 
 }
-
 =
 await supabase.auth.signInWithPassword({
 
@@ -403,29 +436,26 @@ password
 
 
 
-
-
 if(error){
-
 
 console.error(
 "LOGIN ERROR",
 error
 );
 
-
 return false;
-
 
 }
 
 
 
-
+if(data.user){
 
 await loadUser(
 data.user.id
 );
+
+}
 
 
 
@@ -444,8 +474,7 @@ return true;
 
 async function register(
 form:any
-){
-
+):Promise<void>{
 
 
 if(!supabase)
@@ -458,17 +487,6 @@ throw new Error(
 
 
 
-
-console.log(
-"START REGISTER"
-);
-
-
-
-
-
-
-
 const {
 
 data:userData,
@@ -476,7 +494,6 @@ data:userData,
 error:userError
 
 }
-
 =
 await supabase.auth.signUp({
 
@@ -497,9 +514,6 @@ throw userError;
 
 
 
-
-
-
 if(!userData.user)
 
 throw new Error(
@@ -511,13 +525,10 @@ throw new Error(
 
 
 
-
-
 let {
 
 data:{
 session
-
 }
 
 }
@@ -528,12 +539,10 @@ await supabase.auth.getSession();
 
 
 
-
-
 if(!session){
 
 
-const result =
+const retry =
 await supabase.auth.signInWithPassword({
 
 email:form.email,
@@ -543,9 +552,8 @@ password:form.password
 });
 
 
-
 session =
-result.data.session;
+retry.data.session;
 
 
 }
@@ -558,20 +566,8 @@ result.data.session;
 if(!session)
 
 throw new Error(
-"No active Supabase session"
+"No active session"
 );
-
-
-
-
-
-
-
-
-const authUserId =
-userData.user.id;
-
-
 
 
 
@@ -590,8 +586,11 @@ form.practiceName
 .replace(/\s+/g,"-")
 
 +
+
 "-"
+
 +
+
 Date.now();
 
 
@@ -656,7 +655,6 @@ throw practiceError;
 
 
 
-
 const {
 
 error:profileError
@@ -670,7 +668,7 @@ await supabase
 
 .insert({
 
-auth_user_id:authUserId,
+auth_user_id:userData.user.id,
 
 practice_id:practiceData.id,
 
@@ -701,14 +699,9 @@ throw profileError;
 
 
 
-
-
 await loadUser(
-authUserId
+userData.user.id
 );
-
-
-
 
 
 
@@ -725,12 +718,11 @@ authUserId
 async function logout(){
 
 
-
-if(supabase)
+if(supabase){
 
 await supabase.auth.signOut();
 
-
+}
 
 
 
@@ -738,6 +730,7 @@ setCurrentUser(null);
 
 setPractice(null);
 
+setProfiles([]);
 
 setClients([]);
 
@@ -765,6 +758,534 @@ setAuditLogs([]);
 
 
 
+function createConsultation(
+patientId:string
+):string{
+
+
+if(!practice || !currentUser)
+
+throw new Error(
+"User not loaded"
+);
+
+
+
+const patient =
+patients.find(
+p=>p.id===patientId
+);
+
+
+
+if(!patient)
+
+throw new Error(
+"Patient not found"
+);
+
+
+
+const client =
+clients.find(
+c=>c.id===patient.clientId
+);
+
+
+
+if(!client)
+
+throw new Error(
+"Client not found"
+);
+
+
+
+const id =
+crypto.randomUUID();
+
+
+
+const consultation:Consultation={
+
+id,
+
+practiceId:practice.id,
+
+patientId,
+
+clientId:client.id,
+
+createdBy:currentUser.id,
+
+treatingVetId:currentUser.id,
+
+consultationDate:
+new Date().toISOString(),
+
+status:"draft",
+
+captureType:"typed",
+
+transcript:"",
+
+updatedAt:
+new Date().toISOString(),
+
+version:0
+
+};
+
+
+
+
+
+
+setConsultations(
+prev=>[
+consultation,
+...prev
+]
+);
+
+
+
+
+
+return id;
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function updateConsultation(
+id:string,
+changes:Partial<Consultation>
+){
+
+
+
+setConsultations(
+prev=>
+
+prev.map(item=>
+
+item.id===id
+
+?
+
+{
+
+...item,
+
+...changes,
+
+updatedAt:
+new Date().toISOString()
+
+}
+
+:
+
+item
+
+)
+
+);
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+await supabase
+
+.from("consultations")
+
+.update({
+
+...changes,
+
+updated_at:
+new Date().toISOString()
+
+})
+
+.eq(
+"id",
+id
+);
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function saveDraft(
+id:string,
+draft:ClinicalDraft
+){
+
+
+
+const consultation =
+consultations.find(
+x=>x.id===id
+);
+
+
+
+if(!consultation)
+
+return;
+
+
+
+
+
+setConsultations(
+
+prev=>
+
+prev.map(item=>
+
+item.id===id
+
+?
+
+{
+
+...item,
+
+clinicalNote:draft
+
+}
+
+:
+
+item
+
+)
+
+);
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+
+await supabase
+
+.from("clinical_notes")
+
+.upsert({
+
+consultation_id:id,
+
+structured_content:draft,
+
+version:
+consultation.version || 0
+
+});
+
+
+
+}
+async function approveConsultation(
+id:string,
+draft:ClinicalDraft,
+reason?:string
+){
+
+
+const consultation =
+consultations.find(
+x=>x.id===id
+);
+
+
+
+if(!consultation)
+
+throw new Error(
+"Consultation not found"
+);
+
+
+
+const updated:Partial<Consultation>={
+
+
+status:"approved",
+
+
+clinicalNote:draft,
+
+
+approvedBy:
+currentUser?.id,
+
+
+approvedAt:
+new Date().toISOString(),
+
+
+version:
+(consultation.version || 0) + 1
+
+
+};
+
+
+
+
+
+
+await updateConsultation(
+id,
+updated
+);
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+
+
+
+await supabase
+
+.from("clinical_notes")
+
+.upsert({
+
+consultation_id:id,
+
+structured_content:draft,
+
+approved_by:currentUser?.id,
+
+approved_at:
+new Date().toISOString(),
+
+version:
+(consultation.version || 0)+1,
+
+change_reason:
+reason || null
+
+});
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function addOwnerSummary(
+summary:OwnerSummary
+){
+
+
+
+setOwnerSummaries(
+
+prev=>[
+summary,
+...prev
+]
+
+);
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+await supabase
+
+.from("owner_summaries")
+
+.insert(summary);
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function updateOwnerSummary(
+id:string,
+changes:Partial<OwnerSummary>
+){
+
+
+
+setOwnerSummaries(
+
+prev=>
+
+prev.map(item=>
+
+item.id===id
+
+?
+
+{
+
+...item,
+
+...changes
+
+}
+
+:
+
+item
+
+)
+
+);
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+
+await supabase
+
+.from("owner_summaries")
+
+.update(changes)
+
+.eq(
+"id",
+id
+);
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function addMedicine(
+medicine:Medicine
+){
+
+
+
+setMedicines(
+
+prev=>[
+medicine,
+...prev
+]
+
+);
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+
+await supabase
+
+.from("medicines")
+
+.insert(medicine);
+
+
+
+}
+
+
+
+
+
+
+
+
+
 return (
 
 <AppStateContext.Provider
@@ -774,6 +1295,8 @@ value={{
 currentUser,
 
 practice,
+
+profiles,
 
 
 clients,
@@ -791,14 +1314,30 @@ versions,
 auditLogs,
 
 
+
 login,
 
 register,
 
 logout,
 
-refreshData:loadAppData
 
+refreshData:loadAppData,
+
+
+createConsultation,
+
+updateConsultation,
+
+saveDraft,
+
+approveConsultation,
+
+addOwnerSummary,
+
+updateOwnerSummary,
+
+addMedicine
 
 }}
 
@@ -810,8 +1349,8 @@ refreshData:loadAppData
 
 </AppStateContext.Provider>
 
-
 );
+
 
 
 }
@@ -825,7 +1364,6 @@ refreshData:loadAppData
 
 
 export function useAppState(){
-
 
 
 const context =
