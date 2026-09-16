@@ -1,170 +1,236 @@
-import { useState } from "react";
+import {
+  useState
+} from "react";
+
+import {
+  Plus
+} from "lucide-react";
 
 
-const faqData = [
+
+const faqs = [
 
   {
     question:
       "What is VetScribe?",
 
     answer:
-      "VetScribe is an AI clinical documentation assistant designed specifically for veterinary teams. It helps transform consultation conversations into structured clinical documentation for veterinary professionals to review, edit and approve."
+      "VetScribe is an AI-assisted veterinary documentation platform that helps veterinary teams capture consultations and prepare structured clinical notes for review."
   },
 
 
   {
     question:
-      "Does VetScribe make clinical decisions?",
+      "Does VetScribe replace the veterinarian?",
 
     answer:
-      "No. VetScribe is designed to assist with documentation rather than replace veterinary clinical judgement. AI-drafted content should be reviewed and approved by the appropriate veterinary professional."
+      "No. VetScribe is designed to support veterinary professionals by reducing documentation workload. Final review, editing and approval remain under veterinary control."
   },
 
 
   {
     question:
-      "Can I edit the AI-drafted notes?",
+      "How does VetScribe create clinical notes?",
 
     answer:
-      "Yes. VetScribe is designed around a review-first workflow, allowing veterinary professionals to review and edit the draft before approving the final documentation."
+      "VetScribe captures consultation information and transforms it into structured documentation that can be reviewed, edited and approved by the veterinary professional."
   },
 
 
   {
     question:
-      "Does VetScribe diagnose animals?",
+      "Is my practice data secure?",
 
     answer:
-      "VetScribe should not be positioned as a diagnostic tool. Its primary purpose is to assist with clinical documentation and organisation of information captured during consultations."
+      "VetScribe is designed with security, access control and responsible AI use in mind. More detailed security information will be provided as the platform develops."
   },
 
 
   {
     question:
-      "Can I use VetScribe with my practice?",
+      "Can my whole veterinary team use VetScribe?",
 
     answer:
-      "Yes. VetScribe is being designed for veterinary practices and teams, with practice-level accounts and workflows intended to support multiple veterinary professionals working from the same account."
+      "VetScribe is being designed for veterinary practices and teams, with user access based on practice requirements and permissions."
   },
 
 
   {
     question:
-      "Is my data secure?",
+      "Do I need special equipment?",
 
     answer:
-      "VetScribe is designed with appropriate security and access controls for practice data — see the Security section above for details."
-  },
-
-
-  {
-    question:
-      "Does VetScribe integrate with my practice management system?",
-
-    answer:
-      "Practice management integrations are part of the VetScribe roadmap. The current workflow allows teams to review and use their documentation directly within VetScribe."
-  },
-
-
-  {
-    question:
-      "Is there a free trial?",
-
-    answer:
-      "Yes. Start your free trial to experience the VetScribe workflow before committing to a paid plan."
+      "No special hardware is required. VetScribe is designed to work through standard devices used within veterinary practices."
   }
 
+
 ];
+
+
+
 
 
 export function FAQ(){
 
 
-const [openIndex,setOpenIndex] = useState<number | null>(null);
+const [
+  openIndex,
+  setOpenIndex
+]=useState<number | null>(null);
+
+
+
 
 
 return (
 
-<section
-className="faq-section"
-id="faq"
->
+
+<section className="faq-section">
+
+
+<div className="faq-heading">
 
 
 <h2>
+
 Frequently Asked Questions
+
 </h2>
+
+
+
+<p>
+
+Everything you need to know about VetScribe.
+
+</p>
+
+
+</div>
+
+
+
+
+
+
 
 
 <div className="faq-container">
 
 
 {
-faqData.map((item,index)=>(
+
+faqs.map(
+(faq,index)=>{
+
+
+const open =
+openIndex===index;
+
+
+
+return (
 
 
 <div
 
-className={`faq-item ${
-openIndex === index ? "active" : ""
-}`}
-
 key={index}
+
+className={`faq-item ${open ? "active" : ""}`}
 
 >
 
 
 <button
 
+
 className="faq-question"
 
-onClick={() =>
+
+onClick={()=>
+
+
 setOpenIndex(
-openIndex === index
-? null
-: index
+
+open
+
+?
+
+null
+
+:
+
+index
+
 )
+
+
 }
+
 
 >
 
 
 <span>
-{item.question}
-</span>
 
-
-<span className="faq-icon">
-
-{
-openIndex === index
-? "−"
-: "+"
-}
+{faq.question}
 
 </span>
+
+
+
+<Plus
+
+size={22}
+
+className={`faq-icon ${open ? "rotate" : ""}`}
+
+/>
 
 
 </button>
 
 
+
+
+
+
+
 <div
-className="faq-answer"
+
+className={`faq-answer-wrapper ${open ? "open" : ""}`}
+
 >
+
+
+<div className="faq-answer">
+
 
 <p>
 
-{item.answer}
+{faq.answer}
 
 </p>
 
-</div>
-
 
 </div>
 
 
-))
+</div>
+
+
+
+
+
+</div>
+
+
+);
+
+
+}
+
+)
 
 }
 
@@ -172,7 +238,11 @@ className="faq-answer"
 </div>
 
 
+
+
+
 </section>
+
 
 );
 

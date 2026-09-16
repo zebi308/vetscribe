@@ -1,39 +1,39 @@
-export function Footer() {
+import logo from "../../assets/VetScribe logo.png";
+import privacyPolicy from "../../assets/VetScribe_Privacy_Policy.pdf";
+
+
+export function Footer(){
 
 
 return (
 
-<footer className="footer">
-
-
-<div className="footer-container">
+<footer className="landing-footer">
 
 
 
-{/* BRAND */}
+<div className="footer-top">
+
+
 
 <div className="footer-brand">
 
 
-<div className="footer-logo">
+<img
 
-<span className="logo-icon">
-🐾
-</span>
+src={logo}
 
-<span>
-VetScribe
-</span>
+alt="VetScribe"
 
+className="footer-logo"
 
-</div>
+/>
 
 
 
 <p>
 
-AI-powered clinical documentation assistant
-built for modern veterinary practices.
+AI-assisted veterinary documentation built
+for modern veterinary practices.
 
 </p>
 
@@ -45,33 +45,40 @@ built for modern veterinary practices.
 
 
 
-{/* PRODUCT */}
-
-<div className="footer-column">
 
 
-<h3>
+<div className="footer-links">
+
+
+
+<div>
+
+
+<h4>
+
 Product
-</h3>
+
+</h4>
 
 
 <a href="#features">
-AI Clinical Notes
+
+Features
+
 </a>
 
 
 <a href="#workflow">
+
 How It Works
+
 </a>
 
 
 <a href="#pricing">
+
 Pricing
-</a>
 
-
-<a href="#faq">
-FAQ
 </a>
 
 
@@ -82,34 +89,50 @@ FAQ
 
 
 
-{/* COMPANY */}
-
-<div className="footer-column">
 
 
-<h3>
+<div>
+
+
+<h4>
+
 Company
-</h3>
+
+</h4>
 
 
-<a href="#">
-About VetScribe
-</a>
 
+<a
 
-<a href="#">
+href={`mailto:support@vetscribe.clariana.co.uk`}
+
+>
+
 Contact
+
 </a>
 
 
-<a href="#">
-Careers
+
+<a
+
+href={privacyPolicy}
+
+target="_blank"
+
+rel="noopener noreferrer"
+
+>
+
+Privacy
+
 </a>
 
 
-<a href="#">
-Support
-</a>
+
+</div>
+
+
 
 
 
@@ -119,42 +142,11 @@ Support
 
 
 
-{/* LEGAL */}
-
-<div className="footer-column">
-
-
-<h3>
-Legal
-</h3>
-
-
-<a href="#">
-Privacy Policy
-</a>
-
-
-<a href="#">
-Terms of Service
-</a>
-
-
-<a href="#">
-Data Protection
-</a>
-
-
-<a href="#">
-Security
-</a>
-
-
-
 </div>
 
 
 
-</div>
+
 
 
 
@@ -163,13 +155,67 @@ Security
 <div className="footer-bottom">
 
 
+
+<div className="footer-bottom-logo">
+
+
+<img
+
+src={logo}
+
+alt="VetScribe"
+
+className="footer-logo-small"
+
+/>
+
+
+</div>
+
+
+
+
+
 <p>
+
 © 2026 VetScribe. All rights reserved.
+
 </p>
 
 
 
+<p>
+
+Product by{" "}
+
+
+<a
+
+href="https://www.clariana.co.uk/"
+
+target="_blank"
+
+rel="noopener noreferrer"
+
+>
+
+<strong>
+
+Clariana
+
+</strong>
+
+</a>
+
+
+</p>
+
+
+
+
 </div>
+
+
 
 
 

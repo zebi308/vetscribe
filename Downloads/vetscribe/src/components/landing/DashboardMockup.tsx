@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 
 export function DashboardMockup(){
@@ -10,6 +11,14 @@ const [status,setStatus] = useState(
 
 
 const [seconds,setSeconds] = useState(52);
+
+
+const [showNote,setShowNote] = useState(false);
+
+
+const [generated,setGenerated] = useState(false);
+
+
 
 
 
@@ -26,6 +35,8 @@ setSeconds(prev=>prev+1);
 
 
 
+
+
 const aiTimer=setInterval(()=>{
 
 
@@ -36,11 +47,24 @@ if(prev==="Recording consultation...")
 return "AI analysing consultation...";
 
 
+
 if(prev==="AI analysing consultation...")
+{
+
+setGenerated(true);
+
 return "Generating clinical note...";
 
+}
 
-return "Recording consultation...";
+
+
+if(prev==="Generating clinical note...")
+return "Clinical note ready for review";
+
+
+
+return prev;
 
 
 });
@@ -50,10 +74,15 @@ return "Recording consultation...";
 
 
 
+
+
 return ()=>{
 
+
 clearInterval(timer);
+
 clearInterval(aiTimer);
+
 
 }
 
@@ -65,9 +94,18 @@ clearInterval(aiTimer);
 
 
 
+
+
 return (
 
+
+<>
+
+
 <div className="dashboard-mockup">
+
+
+
 
 
 
@@ -80,17 +118,19 @@ return (
 VetScribe AI
 </h3>
 
+
 <span>
 Clinical Documentation Assistant
 </span>
+
 
 </div>
 
 
 
-<div className="ai-status">
 
-<span></span>
+
+<div className="ai-status">
 
 Ready
 
@@ -103,13 +143,17 @@ Ready
 
 
 
-<div className="consultation-card">
 
+
+
+
+<div className="consultation-card">
 
 <div className="patient-info">
 
 
-<div>
+<div className="patient-column">
+
 
 <label>
 CURRENT CONSULTATION
@@ -130,24 +174,31 @@ Golden Retriever • 5 years
 
 
 
-<div className="owner">
+
+
+<div className="owner-column">
+
 
 <label>
-Owner:
+OWNER
 </label>
+
 
 <strong>
 Sarah Williams
 </strong>
 
-</div>
-
-
 
 </div>
 
 
+
 </div>
+
+
+</div>
+
+
 
 
 
@@ -166,7 +217,10 @@ Consultation Recording
 
 
 
+
+
 <div className="timer">
+
 
 🎙
 
@@ -188,19 +242,29 @@ seconds%60
 
 
 
+
+
 <div className="wave">
 
 
 <span></span>
-<span></span>
-<span></span>
-<span></span>
-<span></span>
+
 <span></span>
 
+<span></span>
+
+<span></span>
+
+<span></span>
+
+<span></span>
 
 
 </div>
+
+
+
+
 
 
 
@@ -211,7 +275,10 @@ seconds%60
 </p>
 
 
+
 </div>
+
+
 
 
 
@@ -225,6 +292,9 @@ seconds%60
 <h3>
 Documentation Processing
 </h3>
+
+
+
 
 
 <div className="check">
@@ -259,7 +329,6 @@ Documentation Processing
 
 
 
-
 <div className="note-card">
 
 
@@ -271,8 +340,142 @@ Draft Clinical Note
 
 
 <p>
-
 SOAP format ready for review
+</p>
+
+
+</div>
+
+
+
+
+
+
+<button
+
+disabled={!generated}
+
+className={generated ? "active-review" : ""}
+
+onClick={()=>setShowNote(true)}
+
+>
+
+
+{generated ? "Review Note" : "Generating..."}
+
+
+</button>
+
+
+
+
+
+
+<div className="lines">
+
+<span></span>
+
+<span></span>
+
+<span></span>
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+showNote &&
+
+createPortal(
+
+
+<div className="clinical-modal-overlay">
+
+
+
+<div className="clinical-modal">
+
+
+
+
+
+<div className="review-header">
+
+
+<h3>
+
+Clinical Note Review
+
+</h3>
+
+
+
+
+<button
+
+onClick={()=>setShowNote(false)}
+
+>
+
+×
+
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+<h4>
+
+SOAP Format
+
+</h4>
+
+
+
+
+
+
+
+<div className="soap-section">
+
+
+<strong>
+Subjective
+</strong>
+
+
+<p>
+
+Owner reports Max has been vomiting intermittently for approximately three days. Appetite reduced but drinking normally.
 
 </p>
 
@@ -281,39 +484,99 @@ SOAP format ready for review
 
 
 
-<button
-onClick={() =>
-document
-.getElementById("demo")
-?.scrollIntoView({
-behavior: "smooth"
-})
+
+
+
+
+
+<div className="soap-section">
+
+
+<strong>
+Objective
+</strong>
+
+
+<p>
+
+Temperature 38.7°C. Mucous membranes pink. Mild abdominal tension detected on examination.
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div className="soap-section">
+
+
+<strong>
+Assessment
+</strong>
+
+
+<p>
+
+Possible acute gastrointestinal condition. Differentials include dietary indiscretion and gastritis.
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div className="soap-section">
+
+
+<strong>
+Plan
+</strong>
+
+
+<p>
+
+Supportive management recommended. Monitor vomiting frequency, appetite and hydration. Return if symptoms worsen.
+
+</p>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+</div>,
+
+
+document.body
+
+
+)
+
 }
->
-
-Review
-
-</button>
-
-
-
-<div className="lines">
-
-<span></span>
-<span></span>
-<span></span>
-
-</div>
-
-
-
-</div>
 
 
 
 
 
-</div>
+</>
 
 
 );

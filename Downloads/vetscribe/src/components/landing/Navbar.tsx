@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from "../../assets/VetScribe logo.png";
 
 
 export function Navbar(){
@@ -7,8 +7,6 @@ export function Navbar(){
 
 const navigate = useNavigate();
 
-
-const [menuOpen,setMenuOpen] = useState(false);
 
 
 
@@ -24,10 +22,9 @@ behavior:"smooth"
 });
 
 
-setMenuOpen(false);
-
-
 };
+
+
 
 
 
@@ -41,26 +38,42 @@ return (
 
 
 
+
 {/* LOGO */}
 
 
-<div 
+<div
+
+
 className="landing-logo"
+
+
 onClick={()=>window.scrollTo({
+
 top:0,
+
 behavior:"smooth"
+
 })}
+
+
 >
 
 
-🐾
+<img
 
-<span>
-VetScribe
-</span>
+src={logo}
+
+alt="VetScribe"
+
+className="navbar-logo-image"
+
+/>
+
 
 
 </div>
+
 
 
 
@@ -73,40 +86,66 @@ VetScribe
 
 
 
-<div 
-className={`nav-links ${menuOpen ? "open" : ""}`}
->
+<div className="nav-links">
 
 
 <button
+
 onClick={()=>scrollToSection("features")}
+
 >
+
 Features
+
 </button>
 
 
+
+
+
 <button
+
 onClick={()=>scrollToSection("workflow")}
+
 >
+
 How It Works
+
 </button>
 
 
+
+
+
 <button
+
 onClick={()=>scrollToSection("pricing")}
+
 >
+
 Pricing
+
 </button>
+
+
+
 
 
 <button
+
 onClick={()=>scrollToSection("faq")}
+
 >
+
 FAQ
+
 </button>
+
+
 
 
 </div>
+
 
 
 
@@ -120,6 +159,7 @@ FAQ
 
 
 <div className="nav-actions">
+
 
 
 <button
@@ -138,6 +178,7 @@ Login
 
 
 
+
 <button
 
 className="register-btn"
@@ -151,48 +192,8 @@ Register
 </button>
 
 
-
-
-
-<button
-
-className="trial-btn"
-
-onClick={()=>navigate("/register")}
-
->
-
-Start Free Trial
-
-</button>
-
-
-
-
 </div>
 
-
-
-
-
-
-
-
-{/* MOBILE BUTTON */}
-
-
-
-<button
-
-className="mobile-menu-btn"
-
-onClick={()=>setMenuOpen(!menuOpen)}
-
->
-
-☰
-
-</button>
 
 
 
