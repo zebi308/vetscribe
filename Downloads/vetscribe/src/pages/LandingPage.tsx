@@ -7,410 +7,600 @@ import { FAQ } from "../components/landing/FAQ";
 import { Footer } from "../components/landing/footer";
 
 
-export function LandingPage(){
+export function LandingPage() {
 
+  return (
 
-return (
+    <div className="landing">
 
-<div className="landing">
+      <Navbar />
 
+      <Hero />
 
-<Navbar />
 
+      {/* VALUE STATEMENTS */}
 
-<Hero />
+      <section className="stats">
 
+        <div>
+          <strong>Minutes, Not Hours</strong>
+          <p>
+            Turn consultations into structured documentation.
+          </p>
+        </div>
 
+        <div>
+          <strong>Vet Reviewed</strong>
+          <p>
+            Every draft remains under professional control.
+          </p>
+        </div>
 
-{/* STATS */}
+        <div>
+          <strong>Structured Notes</strong>
+          <p>
+            Generate consistent clinical documentation from conversations.
+          </p>
+        </div>
 
-<section className="stats">
+        <div>
+          <strong>Available When You Need It</strong>
+          <p>
+            Documentation support whenever your practice needs it.
+          </p>
+        </div>
 
+      </section>
 
-<div>
-<strong>
-10,000+
-</strong>
 
-<p>
-Consultations documented
-</p>
+      {/* PROBLEM */}
 
-</div>
+      <section className="problem">
 
+        <div className="section-title">
 
+          <span>THE PROBLEM</span>
 
-<div>
+          <h2>
+            The consultation doesn't end when the patient leaves.
+            The documentation does.
+          </h2>
 
-<strong>
-70%
-</strong>
+          <p>
+            Veterinary professionals can spend valuable time after consultations
+            writing, formatting and completing clinical notes. This creates
+            administrative pressure and takes time away from patient care.
+          </p>
 
-<p>
-Less documentation workload
-</p>
+        </div>
 
-</div>
 
+        <div className="problem-cards">
 
+          <div className="problem-box">
 
-<div>
+            <h3>Without VetScribe</h3>
 
-<strong>
-5 min
-</strong>
+            <p>✗ Manual note writing</p>
+            <p>✗ Reconstructing consultations from memory</p>
+            <p>✗ Repetitive documentation</p>
+            <p>✗ Administrative backlog</p>
 
-<p>
-Average note generation
-</p>
+          </div>
 
-</div>
 
+          <div className="solution-box">
 
+            <h3>With VetScribe</h3>
 
-<div>
+            <p>✓ Consultation captured naturally</p>
+            <p>✓ AI-drafted clinical documentation</p>
+            <p>✓ Faster patient records</p>
+            <p>✓ Vet reviews and approves</p>
+            <p>✓ More time focused on patient care</p>
 
-<strong>
-24/7
-</strong>
+          </div>
 
-<p>
-AI assistant availability
-</p>
+        </div>
 
-</div>
+      </section>
 
 
+      {/* HOW IT WORKS */}
 
-</section>
+      <section
+        id="workflow"
+        className="workflow"
+      >
 
+        <h2>
+          How VetScribe Works
+        </h2>
 
+        <div className="workflow-grid">
 
+          <div>
 
+            <span>01</span>
 
+            <h3>
+              Capture the Consultation
+            </h3>
 
-{/* PROBLEM */}
+            <p>
+              Start a consultation and let VetScribe securely capture
+              the conversation while you focus on the patient.
+            </p>
 
+          </div>
 
-<section className="problem">
 
+          <div>
 
-<div className="section-title">
+            <span>02</span>
 
+            <h3>
+              AI Drafts the Clinical Note
+            </h3>
 
-<span>
-THE PROBLEM
-</span>
+            <p>
+              VetScribe turns the consultation into structured
+              clinical documentation for the veterinarian to review.
+            </p>
 
+          </div>
 
-<h2>
-Veterinary professionals lose hours every week writing notes.
-</h2>
 
+          <div>
 
-<p>
-Manual documentation takes time away from patient care.
-VetScribe helps transform consultations into structured records.
-</p>
+            <span>03</span>
 
+            <h3>
+              Review, Edit & Approve
+            </h3>
 
-</div>
+            <p>
+              Review the draft, make any required changes and approve
+              the final clinical record.
+            </p>
 
+          </div>
 
 
+          <div>
 
-<div className="problem-cards">
+            <span>04</span>
 
+            <h3>
+              Generate Client Summary
+            </h3>
 
+            <p>
+              Create a clear client-facing summary to support
+              communication after the consultation.
+            </p>
 
-<div className="problem-box">
+          </div>
 
-<h3>
-Without VetScribe
-</h3>
+        </div>
 
+      </section>
 
-<p>
-❌ Manual note writing
-</p>
 
+      {/* BEFORE / AFTER PRODUCT DEMONSTRATION */}
 
-<p>
-❌ Long administrative tasks
-</p>
+      <section className="product-demo">
 
+        <div className="demo-heading">
 
-<p>
-❌ Less time with patients
-</p>
+          <span>SEE VETSCRIBE IN ACTION</span>
 
+          <h2>
+            From consultation conversation to structured clinical note
+          </h2>
 
-<p>
-❌ Repetitive documentation work
-</p>
+          <p>
+            VetScribe captures the consultation and prepares a structured
+            draft for the veterinarian to review, edit and approve.
+          </p>
 
+        </div>
 
-</div>
 
+        <div className="demo-grid">
 
+          <div className="demo-card before-card">
 
+            <span className="demo-label">
+              BEFORE
+            </span>
 
+            <h3>
+              Consultation Dialogue
+            </h3>
 
+            <div className="dialogue">
 
-<div className="solution-box">
+              <p>
+                <strong>Vet:</strong> "How long has Bella been scratching?"
+              </p>
 
-<h3>
-With VetScribe
-</h3>
+              <p>
+                <strong>Owner:</strong> "About three weeks, mostly at night."
+              </p>
 
+              <p>
+                <strong>Vet:</strong> "Have you noticed any redness or changes
+                to her skin?"
+              </p>
 
-<p>
-✓ AI generated clinical notes
-</p>
+              <p>
+                <strong>Owner:</strong> "Yes, around her stomach and paws."
+              </p>
 
+            </div>
 
-<p>
-✓ Faster patient records
-</p>
+          </div>
 
 
-<p>
-✓ Vet controlled approval
-</p>
+          <div className="demo-arrow" aria-hidden="true">
+            →
+          </div>
 
 
-<p>
-✓ More focus on animal care
-</p>
+          <div className="demo-card after-card">
 
+            <span className="demo-label">
+              AFTER
+            </span>
 
-</div>
+            <h3>
+              AI-Drafted Clinical Note
+            </h3>
 
+            <div className="clinical-note">
 
+              <p>
+                <strong>History:</strong> Pruritus reported for approximately
+                three weeks, more noticeable at night.
+              </p>
 
-</div>
+              <p>
+                <strong>Clinical Context:</strong> Owner reports redness around
+                the abdomen and paws.
+              </p>
 
+              <p>
+                <strong>Assessment:</strong> Clinical assessment to be completed
+                and confirmed by the veterinarian.
+              </p>
 
+              <p>
+                <strong>Plan:</strong> Review findings and finalise the clinical
+                record following veterinary assessment.
+              </p>
 
-</section>
+            </div>
 
+            <p className="review-note">
+              Vet reviews, edits and approves the final clinical record.
+            </p>
 
+          </div>
 
+        </div>
 
+      </section>
 
 
+      {/* FEATURES */}
 
+      <section
+        id="features"
+        className="features"
+      >
 
+        <div className="features-heading">
 
-{/* HOW IT WORKS */}
+          <h2>
+            Built around the veterinary workflow
+          </h2>
 
+          <p>
+            VetScribe is designed to reduce documentation work without
+            taking control away from veterinary professionals.
+          </p>
 
-<section
-id="workflow"
-className="workflow"
->
+        </div>
 
 
+        <div className="feature-grid">
 
-<h2>
-How VetScribe Works
-</h2>
+          <div>
 
+            <h3>
+              AI Consultation Scribe
+            </h3>
 
+            <p>
+              Capture consultations naturally without interrupting the
+              conversation to type every detail.
+            </p>
 
-<div className="workflow-grid">
+          </div>
 
 
+          <div>
 
-<div>
+            <h3>
+              Structured Clinical Notes
+            </h3>
 
-<span>
-01
-</span>
+            <p>
+              Turn consultation conversations into organised clinical
+              documentation and SOAP-style drafts.
+            </p>
 
+          </div>
 
-<h3>
-Capture Consultation
-</h3>
 
+          <div>
 
-<p>
-Record the conversation securely during the appointment.
-</p>
+            <h3>
+              Patient Documentation
+            </h3>
 
+            <p>
+              Keep consultation information structured and easier to review
+              across the patient's history.
+            </p>
 
-</div>
+          </div>
 
 
+          <div>
 
+            <h3>
+              Owner-Friendly Summaries
+            </h3>
 
-<div>
+            <p>
+              Create clear, easy-to-understand summaries from clinical
+              documentation for client communication.
+            </p>
 
-<span>
-02
-</span>
+          </div>
 
 
-<h3>
-AI Creates Notes
-</h3>
+          <div>
 
+            <h3>
+              Review & Edit
+            </h3>
 
-<p>
-VetScribe converts conversations into structured clinical documentation.
-</p>
+            <p>
+              Review, modify and refine every AI-drafted note before it
+              becomes part of your clinical workflow.
+            </p>
 
+          </div>
 
-</div>
 
+          <div>
 
+            <h3>
+              Practice-Level Control
+            </h3>
 
+            <p>
+              Keep veterinary teams, records and permissions organised
+              within a secure practice workspace.
+            </p>
 
-<div>
+          </div>
 
-<span>
-03
-</span>
+        </div>
 
+      </section>
 
-<h3>
-Review & Save
-</h3>
 
+      {/* BUILT FOR VETERINARY PRACTICES */}
 
-<p>
-Veterinarians review, edit and approve before saving.
-</p>
+      <section className="built-for-vets">
 
+        <div className="built-for-vets-heading">
 
-</div>
+          <h2>
+            Not another generic AI assistant.
+          </h2>
 
+          <p>
+            VetScribe is being built specifically around the documentation
+            needs of veterinary teams.
+          </p>
 
+        </div>
 
-</div>
 
+        <div className="vet-specific-grid">
 
+          <div>✓ Veterinary terminology</div>
 
-</section>
+          <div>✓ Clinical documentation workflows</div>
 
+          <div>✓ SOAP-style notes</div>
 
+          <div>✓ Vet-controlled approval</div>
 
+          <div>✓ Patient-focused records</div>
 
+          <div>✓ Owner-friendly summaries</div>
 
+          <div>✓ Practice-level user management</div>
 
+          <div>✓ Designed for UK veterinary practices</div>
 
+        </div>
 
-{/* FEATURES */}
 
+        <div className="vet-positioning">
 
-<section
-id="features"
-className="features"
->
+          <p>
+            The goal isn't to replace the vet. It's to remove unnecessary
+            documentation work from the vet's day.
+          </p>
 
+        </div>
 
+      </section>
 
-<h2>
-Everything your veterinary practice needs
-</h2>
 
+      {/* SECURITY */}
 
+      <section className="security-section">
 
-<div className="feature-grid">
+        <div className="security-heading">
 
+          <h2>
+            Your practice data deserves serious protection.
+          </h2>
 
-<div>
+          <p>
+            VetScribe is designed with security, access control and responsible
+            AI use in mind.
+          </p>
 
-<h3>
-AI Clinical Notes
-</h3>
+        </div>
 
 
-<p>
-SOAP notes, summaries and consultation records generated instantly.
-</p>
+        <div className="security-grid">
 
+          <div>
 
-</div>
+            <h3>
+              Data Protection
+            </h3>
 
+            <p>
+              Protect practice and client information with appropriate
+              security controls.
+            </p>
 
+          </div>
 
 
-<div>
+          <div>
 
-<h3>
-Client & Patient Records
-</h3>
+            <h3>
+              Access Control
+            </h3>
 
+            <p>
+              Ensure users only access information and practice data
+              they are authorised to see.
+            </p>
 
-<p>
-Keep owners, pets and consultation history organised.
-</p>
+          </div>
 
 
-</div>
+          <div>
 
+            <h3>
+              Practice Isolation
+            </h3>
 
+            <p>
+              Keep each veterinary practice's data separated through
+              organisation-level access controls.
+            </p>
 
+          </div>
 
-<div>
 
-<h3>
-Secure Practice Workflow
-</h3>
+          <div>
 
+            <h3>
+              Human Review
+            </h3>
 
-<p>
-Designed for modern veterinary teams and clinics.
-</p>
+            <p>
+              AI-drafted documentation remains a draft until reviewed and
+              approved by an authorised veterinary professional.
+            </p>
 
+          </div>
 
-</div>
 
+          <div>
 
+            <h3>
+              Data & AI Transparency
+            </h3>
 
-</div>
+            <p>
+              Clear information about how customer data is handled and
+              whether it is used for model training.
+            </p>
 
+          </div>
 
+        </div>
 
-</section>
+      </section>
 
 
+      {/* PRACTICE MANAGEMENT INTEGRATIONS */}
 
+      <section className="integrations-section">
 
+        <div className="integrations-heading">
 
+          <h2>
+            Designed to fit your existing practice workflow
+          </h2>
 
+          <p>
+            VetScribe is designed to support the systems your practice
+            already uses, rather than forcing your team to completely
+            change the way they work.
+          </p>
 
+        </div>
 
 
-{/* PRICING */}
+        <div className="integrations-roadmap">
 
-<PricingsSection />
+          <h3>
+            Practice management connectivity
+          </h3>
 
+          <p>
+            Start with a simple documentation workflow today, with
+            integrations and deeper practice management connectivity
+            on the roadmap.
+          </p>
 
+        </div>
 
+      </section>
 
 
+      {/* PRICING */}
 
+      <PricingsSection />
 
-{/* FAQ */}
 
-<FAQ />
+      {/* FAQ */}
 
+      <FAQ />
 
 
+      {/* FOOTER */}
 
+      <Footer />
 
+    </div>
 
-{/* FOOTER */}
-
-<Footer />
-
-
-
-</div>
-
-);
-
+  );
 
 }

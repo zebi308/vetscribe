@@ -2,179 +2,143 @@ import { useNavigate } from "react-router-dom";
 import { DashboardMockup } from "./DashboardMockup";
 
 
-export function Hero(){
+export function Hero() {
 
+  const navigate = useNavigate();
 
-const navigate = useNavigate();
 
+  return (
 
+    <section className="hero">
 
-return (
 
-<section className="hero">
+      <div className="hero-content">
 
 
+        <div className="hero-badge">
 
-<div className="hero-content">
+          AI Clinical Documentation for Veterinary Teams
 
+        </div>
 
 
-<div className="hero-badge">
+        <h1>
 
-AI Clinical Documentation For Veterinary Teams
+          Your Consultation Ends.
 
-</div>
+          <br />
 
+          <span>
+            Your Clinical Notes Are Already Drafted.
+          </span>
 
+        </h1>
 
 
-<h1>
+        <p>
 
-Your Consultation Ends.
+          VetScribe listens during consultations and transforms conversations
+          into structured veterinary documentation, giving your team a draft
+          clinical note ready to review, edit and approve.
 
-<br/>
+        </p>
 
-<span>
-Your Clinical Notes Are Already Done.
-</span>
 
+        <div className="hero-buttons">
 
-</h1>
 
+          <button
 
+            className="primary-btn"
 
+            onClick={() => navigate("/register")}
 
+          >
 
-<p>
+            Start Free Trial →
 
-VetScribe listens during consultations and transforms conversations
-into structured veterinary notes, patient records and treatment
-summaries — helping vets save hours every week.
+          </button>
 
-</p>
 
+          <button
 
+            className="secondary-btn"
 
+            onClick={() =>
 
+              document
+                .getElementById("workflow")
+                ?.scrollIntoView({
+                  behavior: "smooth"
+                })
 
+            }
 
-<div className="hero-buttons">
+          >
 
+            See How It Works
 
+          </button>
 
-<button
 
-className="primary-btn"
+        </div>
 
-onClick={()=>navigate("/register")}
 
->
+        <div className="trust-row">
 
-Start Free Trial →
 
-</button>
+          <div>
 
+            <span>
+              ✓
+            </span>
 
+            No credit card required
 
+          </div>
 
-<button
 
-className="secondary-btn"
+          <div>
 
-onClick={()=>
+            <span>
+              ✓
+            </span>
 
-document
-.getElementById("workflow")
-?.scrollIntoView({
-behavior:"smooth"
-})
+            Vet approval always required
 
-}
+          </div>
 
->
 
-See How It Works
+          <div>
 
-</button>
+            <span>
+              ✓
+            </span>
 
+            Built for veterinary practices
 
+          </div>
 
-</div>
 
+        </div>
 
 
+      </div>
 
 
+      <div className="hero-dashboard">
 
 
-<div className="trust-row">
+        <DashboardMockup />
 
 
-<div>
+      </div>
 
-<span>
-✓
-</span>
 
-No credit card required
+    </section>
 
-</div>
 
-
-
-<div>
-
-<span>
-✓
-</span>
-
-Vet approval always required
-
-</div>
-
-
-
-<div>
-
-<span>
-✓
-</span>
-
-Built for veterinary practices
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-
-
-
-
-
-<div className="hero-dashboard">
-
-
-<DashboardMockup/>
-
-
-</div>
-
-
-
-
-</section>
-
-
-);
+  );
 
 
 }

@@ -18,7 +18,7 @@ return (
 <div className="footer-logo">
 
 <span className="logo-icon">
-✣
+🐾
 </span>
 
 <span>
@@ -34,14 +34,6 @@ VetScribe
 
 AI-powered clinical documentation assistant
 built for modern veterinary practices.
-
-</p>
-
-
-<p className="footer-small">
-
-Spend less time writing notes.
-More time caring for animals.
 
 </p>
 
@@ -68,7 +60,7 @@ AI Clinical Notes
 </a>
 
 
-<a href="#how-it-works">
+<a href="#workflow">
 How It Works
 </a>
 
@@ -127,7 +119,6 @@ Support
 
 
 
-
 {/* LEGAL */}
 
 <div className="footer-column">
@@ -169,53 +160,11 @@ Security
 
 
 
-{/* CTA */}
-
-
-<div className="footer-cta">
-
-
-<h2>
-Ready to simplify veterinary documentation?
-</h2>
-
-
-<p>
-
-Join veterinary professionals saving time with AI-assisted clinical notes.
-
-</p>
-
-
-
-<a 
-href="/register"
-className="footer-button"
->
-
-Start Free Trial →
-
-</a>
-
-
-</div>
-
-
-
-
-
-
-
 <div className="footer-bottom">
 
 
 <p>
 © 2026 VetScribe. All rights reserved.
-</p>
-
-
-<p>
-Built for veterinary professionals
 </p>
 
 

@@ -9,7 +9,7 @@ const [status,setStatus] = useState(
 );
 
 
-const [seconds,setSeconds] = useState(42);
+const [seconds,setSeconds] = useState(52);
 
 
 
@@ -92,7 +92,7 @@ Clinical Documentation Assistant
 
 <span></span>
 
-AI Ready
+Ready
 
 </div>
 
@@ -133,7 +133,7 @@ Golden Retriever • 5 years
 <div className="owner">
 
 <label>
-Owner
+Owner:
 </label>
 
 <strong>
@@ -162,11 +162,6 @@ Sarah Williams
 
 Consultation Recording
 
-<span className="live">
-LIVE
-</span>
-
-
 </div>
 
 
@@ -185,7 +180,7 @@ Math.floor(seconds/60)
 seconds%60
 ).padStart(2,"0")}
 
-minutes captured
+ recorded
 
 
 </div>
@@ -228,7 +223,7 @@ minutes captured
 
 
 <h3>
-AI Analysis Complete
+Documentation Processing
 </h3>
 
 
@@ -241,20 +236,22 @@ AI Analysis Complete
 
 <div className="check">
 
-✓ Symptoms identified
+✓ Clinical findings captured
 
 </div>
 
 
 <div className="check">
 
-✓ Treatment plan generated
+✓ Consultation details structured
 
 </div>
 
 
 
 </div>
+
+
 
 
 
@@ -269,7 +266,7 @@ AI Analysis Complete
 <div>
 
 <h3>
-Clinical Note
+Draft Clinical Note
 </h3>
 
 
@@ -284,7 +281,15 @@ SOAP format ready for review
 
 
 
-<button>
+<button
+onClick={() =>
+document
+.getElementById("demo")
+?.scrollIntoView({
+behavior: "smooth"
+})
+}
+>
 
 Review
 

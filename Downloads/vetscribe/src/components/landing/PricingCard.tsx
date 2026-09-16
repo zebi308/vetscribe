@@ -38,7 +38,7 @@ export function PricingCard({
 
     return (
 
-        <div 
+        <div
             className={`pricing-card ${popular ? "popular" : ""}`}
         >
 
@@ -69,9 +69,13 @@ export function PricingCard({
 
                 {price}
 
-                <span>
-                    /month
-                </span>
+                {price !== "Custom" && (
+
+                    <span>
+                        /month
+                    </span>
+
+                )}
 
             </div>
 

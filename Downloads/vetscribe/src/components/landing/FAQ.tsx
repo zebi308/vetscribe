@@ -5,57 +5,74 @@ const faqData = [
 
   {
     question:
-      "Does VetScribe replace veterinarians?",
+      "What is VetScribe?",
 
     answer:
-      "No. VetScribe is an AI documentation assistant. It helps veterinary professionals create clinical notes faster, but veterinarians remain responsible for diagnosis, treatment decisions and patient care."
+      "VetScribe is an AI clinical documentation assistant designed specifically for veterinary teams. It helps transform consultation conversations into structured clinical documentation for veterinary professionals to review, edit and approve."
   },
 
 
   {
     question:
-      "How does VetScribe create clinical notes?",
+      "Does VetScribe make clinical decisions?",
 
     answer:
-      "VetScribe captures the consultation workflow, processes the information using AI, and generates structured veterinary documentation including consultation summaries, clinical history and treatment notes."
+      "No. VetScribe is designed to assist with documentation rather than replace veterinary clinical judgement. AI-drafted content should be reviewed and approved by the appropriate veterinary professional."
   },
 
 
   {
     question:
-      "Can I edit AI-generated notes before saving?",
+      "Can I edit the AI-drafted notes?",
 
     answer:
-      "Yes. Every generated clinical note can be reviewed, edited and approved by the veterinarian before it becomes part of the patient's permanent record."
+      "Yes. VetScribe is designed around a review-first workflow, allowing veterinary professionals to review and edit the draft before approving the final documentation."
   },
 
 
   {
     question:
-      "Can multiple veterinarians use the same practice account?",
+      "Does VetScribe diagnose animals?",
 
     answer:
-      "Yes. Professional and Practice plans support multiple veterinary users, allowing teams to collaborate while maintaining secure access controls."
+      "VetScribe should not be positioned as a diagnostic tool. Its primary purpose is to assist with clinical documentation and organisation of information captured during consultations."
   },
 
 
   {
     question:
-      "What type of animals can VetScribe support?",
+      "Can I use VetScribe with my practice?",
 
     answer:
-      "VetScribe is designed for companion animal practices including dogs, cats and other small animal workflows."
+      "Yes. VetScribe is being designed for veterinary practices and teams, with practice-level accounts and workflows intended to support multiple veterinary professionals working from the same account."
   },
 
 
   {
     question:
-      "Is my clinic and patient data secure?",
+      "Is my data secure?",
 
     answer:
-      "VetScribe uses secure access controls and privacy-focused workflows. Veterinary professionals maintain control over their clinical records and information."
+      "VetScribe is designed with appropriate security and access controls for practice data — see the Security section above for details."
   },
 
+
+  {
+    question:
+      "Does VetScribe integrate with my practice management system?",
+
+    answer:
+      "Practice management integrations are part of the VetScribe roadmap. The current workflow allows teams to review and use their documentation directly within VetScribe."
+  },
+
+
+  {
+    question:
+      "Is there a free trial?",
+
+    answer:
+      "Yes. Start your free trial to experience the VetScribe workflow before committing to a paid plan."
+  }
 
 ];
 
@@ -66,10 +83,9 @@ export function FAQ(){
 const [openIndex,setOpenIndex] = useState<number | null>(null);
 
 
-
 return (
 
-<section 
+<section
 className="faq-section"
 id="faq"
 >
@@ -78,7 +94,6 @@ id="faq"
 <h2>
 Frequently Asked Questions
 </h2>
-
 
 
 <div className="faq-container">
@@ -94,9 +109,7 @@ className={`faq-item ${
 openIndex === index ? "active" : ""
 }`}
 
-
 key={index}
-
 
 >
 
@@ -105,14 +118,13 @@ key={index}
 
 className="faq-question"
 
-onClick={()=>
+onClick={() =>
 setOpenIndex(
-openIndex === index 
-? null 
+openIndex === index
+? null
 : index
 )
 }
-
 
 >
 
@@ -125,7 +137,7 @@ openIndex === index
 <span className="faq-icon">
 
 {
-openIndex === index 
+openIndex === index
 ? "−"
 : "+"
 }
@@ -136,12 +148,8 @@ openIndex === index
 </button>
 
 
-
-
 <div
-
 className="faq-answer"
-
 >
 
 <p>
@@ -153,9 +161,7 @@ className="faq-answer"
 </div>
 
 
-
 </div>
-
 
 
 ))

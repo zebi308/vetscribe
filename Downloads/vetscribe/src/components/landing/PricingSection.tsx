@@ -9,22 +9,22 @@ const plans = [
     {
         title:"Starter",
 
-        price:"£19",
+        price:"£24.99",
 
         description:
-        "For individual veterinarians starting with AI documentation",
+        "For individual veterinary professionals",
 
         features:[
 
-            "100 AI consultations/month",
+            "AI consultation capture",
 
-            "AI clinical note generation",
+            "Structured clinical notes",
 
-            "Client & patient records",
+            "Patient documentation",
 
-            "Consultation history",
+            "Review and editing tools",
 
-            "Secure veterinary workflow"
+            "Secure account access"
 
         ],
 
@@ -38,24 +38,24 @@ const plans = [
 
         title:"Professional",
 
-        price:"£49",
+        price:"£44.99",
 
         description:
-        "For growing veterinary practices",
+        "For veterinary practices",
 
         popular:true,
 
         features:[
 
-            "500 AI consultations/month",
-
             "Everything in Starter",
 
-            "SOAP note generation",
+            "Higher consultation allowance",
 
-            "Treatment summaries",
+            "Owner-friendly summaries",
 
-            "Advanced templates",
+            "Advanced note templates",
+
+            "Practice-level features",
 
             "Priority support"
 
@@ -75,21 +75,23 @@ const plans = [
         price:"£99",
 
         description:
-        "For larger veterinary clinics and teams",
+        "For larger veterinary teams and organisations",
 
         features:[
 
-            "Unlimited consultations",
+            "Highest usage allowance",
 
-            "Multiple staff accounts",
+            "Multi-user practice access",
 
-            "Advanced analytics",
+            "Centralised administration",
 
-            "Custom workflows",
+            "Advanced permissions",
 
-            "Practice management tools",
+            "Custom onboarding",
 
-            "Dedicated support"
+            "Integration support",
+
+            "Dedicated account support"
 
         ],
 
@@ -105,10 +107,11 @@ const plans = [
 
 
 
+
 return (
 
 
-<section 
+<section
 className="pricing"
 id="pricing"
 >
@@ -117,10 +120,9 @@ id="pricing"
 
 <h2>
 
-Simple transparent pricing
+Simple, transparent pricing
 
 </h2>
-
 
 
 
@@ -150,6 +152,10 @@ key={index}
 
 </div>
 
+
+<p className="pricing-note">
+Start with a free trial. No credit card required.
+</p>
 
 
 
