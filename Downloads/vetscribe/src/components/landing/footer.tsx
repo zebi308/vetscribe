@@ -104,7 +104,7 @@ Company
 
 <a
 
-href={`mailto:support@vetscribe.clariana.co.uk`}
+href={`mailto:vetscribe@clariana.co.uk`}
 
 >
 

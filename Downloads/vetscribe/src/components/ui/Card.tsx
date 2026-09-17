@@ -1,2 +1,44 @@
-import type { ReactNode } from 'react'
-export function Card({children,className=''}:{children:ReactNode;className?:string}){ return <div className={`rounded-xl border border-slate-200 bg-white shadow-card ${className}`}>{children}</div> }
+import React from "react";
+
+
+interface CardProps {
+
+children: React.ReactNode;
+
+className?: string;
+
+onClick?: ()=>void;
+
+}
+
+
+
+export function Card({
+
+children,
+
+className,
+
+onClick
+
+}:CardProps){
+
+
+return (
+
+<div
+
+onClick={onClick}
+
+className={className}
+
+>
+
+{children}
+
+</div>
+
+);
+
+
+}

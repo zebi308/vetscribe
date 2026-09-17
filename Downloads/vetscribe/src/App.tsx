@@ -29,7 +29,14 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ConsultationsPage } from "./pages/ConsultationsPage";
 import { PatientsPage } from "./pages/PatientsPage";
 import { ClientsPage } from "./pages/ClientsPage";
+import { ClientProfilePage } from "./pages/ClientProfilePage";
 import { OwnerSummariesPage } from "./pages/OwnerSummariesPage";
+// Create / Workflow Pages
+
+import { AddClientPage } from "./pages/AddClientPage";
+import { AddPatientPage } from "./pages/AddPatientPage";
+import { NewConsultationPage } from "./pages/NewConsultationPage";
+import { ConsultationRoomPage } from "./pages/ConsultationRoomPage";
 
 
 // Settings
@@ -45,6 +52,7 @@ import { AuditPage } from "./pages/AuditPage";
 // Admin
 
 import { AdminPage } from "./pages/AdminPage";
+import { PatientHistoryPage } from "./pages/PatientHistoryPage";
 
 
 
@@ -133,7 +141,7 @@ element={<ForgotPasswordPage/>}
 
 
 {/* =====================
-       PROTECTED APP
+        PROTECTED APP
 ===================== */}
 
 
@@ -157,8 +165,7 @@ element={<AppShell/>}
 
 
 
-{/* Dashboard */}
-
+{/* Dashboard Home */}
 
 <Route
 
@@ -172,7 +179,14 @@ element={<DashboardPage/>}
 
 
 
-{/* Core Vet Modules */}
+
+
+
+
+{/* =====================
+        CONSULTATIONS
+===================== */}
+
 
 
 <Route
@@ -182,6 +196,41 @@ path="consultations"
 element={<ConsultationsPage/>}
 
 />
+
+
+
+<Route
+
+path="consultations/new"
+
+element={<NewConsultationPage/>}
+
+/>
+
+
+
+<Route
+
+path="consultations/:id"
+
+element={<ConsultationRoomPage/>}
+
+/>
+
+
+<Route
+path="patients/:id/history"
+element={<PatientHistoryPage/>}
+/>
+
+
+
+
+
+
+{/* =====================
+        PATIENTS
+===================== */}
 
 
 
@@ -197,11 +246,50 @@ element={<PatientsPage/>}
 
 <Route
 
+path="patients/new"
+
+element={<AddPatientPage/>}
+
+/>
+
+{/* =====================
+        CLIENTS
+===================== */}
+
+
+<Route
+
 path="clients"
 
 element={<ClientsPage/>}
 
 />
+
+<Route
+
+path="clients/new"
+
+element={<AddClientPage/>}
+
+/>
+
+<Route
+
+path="clients/:id"
+
+element={<ClientProfilePage/>}
+
+/>
+
+
+
+
+
+
+
+{/* =====================
+        OWNER SUMMARIES
+===================== */}
 
 
 
@@ -227,7 +315,6 @@ element={<OwnerSummariesPage/>}
 
 
 
-
 <Route
 
 path="settings"
@@ -235,8 +322,6 @@ path="settings"
 element={<SettingsPage/>}
 
 />
-
-
 
 
 
@@ -253,11 +338,9 @@ element={<PracticeSettingsPage/>}
 
 
 
-
 <Route
 
 element={
-
 <ProtectedRoute
 
 allowedRoles={[
@@ -289,10 +372,10 @@ element={<StaffPage/>}
 
 
 
+
 <Route
 
 element={
-
 <ProtectedRoute
 
 allowedRoles={[
@@ -328,7 +411,6 @@ element={<TemplatesPage/>}
 <Route
 
 element={
-
 <ProtectedRoute
 
 allowedRoles={[
@@ -360,10 +442,10 @@ element={<PrivacyPage/>}
 
 
 
+
 <Route
 
 element={
-
 <ProtectedRoute
 
 allowedRoles={[
@@ -397,9 +479,8 @@ element={<AuditPage/>}
 
 
 
-
 {/* =====================
-        SUPER ADMIN
+        ADMIN
 ===================== */}
 
 
@@ -407,7 +488,6 @@ element={<AuditPage/>}
 <Route
 
 element={
-
 <ProtectedRoute
 
 allowedRoles={[
@@ -438,11 +518,11 @@ element={<AdminPage/>}
 
 
 
-</Route>
-
 
 </Route>
 
+
+</Route>
 
 
 

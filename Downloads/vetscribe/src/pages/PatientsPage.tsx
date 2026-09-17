@@ -5,62 +5,211 @@ import {
   User,
   MoreHorizontal,
   Plus,
-  HeartPulse
+  HeartPulse,
+  FileText,
+  Stethoscope,
+  Pencil
 } from "lucide-react";
+
+
+import {
+useState
+} from "react";
+
+
+import {
+useNavigate
+} from "react-router-dom";
+
+
+import {
+useAppState
+} from "../lib/AppState";
 
 
 
 export function PatientsPage(){
 
 
-
-const patients = [
-
-{
-name:"Max",
-species:"Dog",
-breed:"Golden Retriever",
-owner:"Sarah Williams",
-age:"5 years",
-lastVisit:"Today",
-status:"Healthy"
-},
+const navigate = useNavigate();
 
 
-{
-name:"Bella",
-species:"Cat",
-breed:"British Shorthair",
-owner:"Michael Brown",
-age:"3 years",
-lastVisit:"12 Sep 2026",
-status:"Vaccination Due"
-},
 
 
-{
-name:"Charlie",
-species:"Dog",
-breed:"Labrador",
-owner:"Emma Johnson",
-age:"7 years",
-lastVisit:"05 Sep 2026",
-status:"Under Treatment"
-},
+const {
+patients,
+clients,
+consultations
+
+}=useAppState();
 
 
-{
-name:"Luna",
-species:"Cat",
-breed:"Persian",
-owner:"David Wilson",
-age:"2 years",
-lastVisit:"01 Sep 2026",
-status:"Healthy"
-}
 
 
-];
+
+const [menuOpen,setMenuOpen] =
+useState<string|null>(null);
+
+
+
+const [search,setSearch] =
+useState("");
+
+
+
+
+
+
+
+
+
+const patientList = patients.map(patient=>{
+
+
+const owner =
+clients.find(
+client=>client.id===patient.clientId
+);
+
+
+
+
+const patientConsultations =
+consultations.filter(
+
+consultation=>
+
+consultation.patientId===patient.id
+
+);
+
+
+
+
+
+const latestConsultation =
+patientConsultations.sort(
+
+(a,b)=>
+
+new Date(
+b.consultationDate|| 0
+).getTime()
+
+-
+
+new Date(
+a.consultationDate || 0
+).getTime()
+
+)[0];
+
+
+
+
+
+return {
+
+
+...patient,
+
+
+
+owner:
+
+owner
+
+?
+
+`${owner.firstName} ${owner.lastName}`
+
+:
+
+"Unknown Owner",
+
+
+
+
+
+lastVisit:
+
+latestConsultation?.consultationDate
+
+?
+
+new Date(
+latestConsultation.consultationDate
+
+)
+
+.toLocaleDateString()
+
+:
+
+"Not available",
+
+
+
+
+
+
+status:
+
+"Active"
+
+
+};
+
+
+});
+
+
+
+
+
+
+
+
+
+const filteredPatients =
+
+patientList.filter(patient=>{
+
+
+const term =
+search.toLowerCase();
+
+
+
+
+return (
+
+patient.name
+?.toLowerCase()
+.includes(term)
+
+
+||
+
+patient.breed
+?.toLowerCase()
+.includes(term)
+
+
+
+||
+
+patient.owner
+?.toLowerCase()
+.includes(term)
+
+);
+
+
+});
+
+
+
 
 
 
@@ -75,9 +224,6 @@ return (
 
 
 
-{/* HEADER */}
-
-
 <div className="
 flex
 flex-col
@@ -88,6 +234,7 @@ md:justify-between
 ">
 
 
+
 <div>
 
 
@@ -96,6 +243,7 @@ md:justify-between
 Patients
 
 </h1>
+
 
 
 <p className="mt-2 text-slate-500">
@@ -109,7 +257,12 @@ Manage animal records, medical history and consultations.
 
 
 
+
+
+
 <button
+
+onClick={()=>navigate("new")}
 
 className="
 flex
@@ -134,6 +287,7 @@ Add Patient
 
 
 
+
 </div>
 
 
@@ -142,8 +296,6 @@ Add Patient
 
 
 
-
-{/* SEARCH */}
 
 
 <div className="
@@ -160,14 +312,31 @@ py-3
 
 
 <Search
+
 size={20}
+
 className="text-slate-400"
+
 />
+
+
 
 
 <input
 
+
+value={search}
+
+
+onChange={
+
+(e)=>setSearch(e.target.value)
+
+}
+
+
 placeholder="Search patient, breed or owner..."
+
 
 className="
 w-full
@@ -175,7 +344,9 @@ outline-none
 text-sm
 "
 
+
 />
+
 
 
 </div>
@@ -186,11 +357,30 @@ text-sm
 
 
 
+{
+filteredPatients.length===0
 
 
-{/* PATIENT GRID */}
+?
+
+<div className="
+rounded-2xl
+border
+border-dashed
+border-slate-300
+bg-white
+p-10
+text-center
+text-slate-500
+">
+
+No patients found.
+
+</div>
 
 
+
+:
 
 <div className="
 grid
@@ -200,19 +390,17 @@ xl:grid-cols-3
 ">
 
 
-
-
-
 {
-patients.map((patient)=>(
+filteredPatients.map((patient)=>(
 
 
 
 <div
 
-key={patient.name}
+key={patient.id}
 
 className="
+relative
 rounded-2xl
 border
 border-slate-200
@@ -223,10 +411,10 @@ hover:shadow-md
 transition
 "
 
+
 >
 
-
-<div className="
+  <div className="
 flex
 items-start
 justify-between
@@ -249,7 +437,26 @@ text-teal-600
 
 
 
+
+
+<div className="relative">
+
+
 <button
+
+onClick={()=>setMenuOpen(
+
+menuOpen===patient.id
+
+?
+
+null
+
+:
+
+patient.id
+
+)}
 
 className="
 rounded-lg
@@ -264,7 +471,186 @@ hover:bg-slate-100
 </button>
 
 
+
+
+
+{
+
+menuOpen===patient.id && (
+
+<div
+
+className="
+absolute
+right-0
+top-10
+z-30
+w-48
+rounded-xl
+border
+bg-white
+p-2
+shadow-lg
+"
+
+>
+
+
+
+
+
+<button
+
+onClick={()=>navigate(
+
+`/patients/${patient.id}`
+
+)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<FileText size={16}/>
+
+View Record
+
+</button>
+
+
+
+
+
+
+
+<button
+
+onClick={()=>navigate(
+
+`/patients/${patient.id}/history`
+
+)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<CalendarDays size={16}/>
+
+Medical History
+
+</button>
+
+
+
+
+
+
+
+<button
+
+onClick={()=>navigate(
+
+`/consultations/new?patient=${patient.id}`
+
+)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<Stethoscope size={16}/>
+
+New Consultation
+
+</button>
+
+
+
+
+
+
+
+
+<button
+
+onClick={()=>navigate(
+
+`/patients/${patient.id}/edit`
+
+)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<Pencil size={16}/>
+
+Edit Patient
+
+</button>
+
+
+
+
+
+
 </div>
+
+)
+
+}
+
+
+</div>
+
+
+</div>
+
 
 
 
@@ -285,13 +671,16 @@ text-slate-900
 
 
 
+
+
+
 <p className="
 mt-1
 text-sm
 text-slate-500
 ">
 
-{patient.breed}
+{patient.breed || "Breed not recorded"}
 
 </p>
 
@@ -308,18 +697,25 @@ text-sm
 ">
 
 
+
+
+
 <div className="
 flex
 items-center
 gap-2
 text-slate-600
 ">
+
 
 <User size={16}/>
 
+
 {patient.owner}
 
+
 </div>
+
 
 
 
@@ -331,12 +727,17 @@ items-center
 gap-2
 text-slate-600
 ">
+
 
 <HeartPulse size={16}/>
 
+
 {patient.species}
 
+
 </div>
+
+
 
 
 
@@ -350,11 +751,21 @@ gap-2
 text-slate-600
 ">
 
+
 <CalendarDays size={16}/>
 
-Last visit: {patient.lastVisit}
+
+Last visit:
+
+{" "}
+
+{patient.lastVisit}
+
 
 </div>
+
+
+
 
 
 
@@ -377,36 +788,18 @@ pt-4
 ">
 
 
-<span className={`
+
+
+
+<span className="
 rounded-full
+bg-green-50
 px-3
 py-1
 text-xs
 font-medium
-
-${
-
-patient.status==="Healthy"
-
-?
-
-"bg-green-50 text-green-700"
-
-:
-
-patient.status==="Vaccination Due"
-
-?
-
-"bg-yellow-50 text-yellow-700"
-
-:
-
-"bg-red-50 text-red-700"
-
-}
-
-`}>
+text-green-700
+">
 
 {patient.status}
 
@@ -414,29 +807,48 @@ patient.status==="Vaccination Due"
 
 
 
+
+
+
+
 <button
 
+
+onClick={()=>navigate(
+
+`/patients/${patient.id}`
+
+)}
+
+
 className="
-text-sm
 font-semibold
 text-teal-600
+hover:text-teal-700
 "
+
 
 >
 
+
 View Record
+
 
 </button>
 
 
 
+
+
+
 </div>
 
 
 
 
-</div>
 
+
+</div>
 
 
 ))
@@ -448,7 +860,7 @@ View Record
 </div>
 
 
-
+}
 
 
 
@@ -456,6 +868,5 @@ View Record
 
 
 );
-
 
 }

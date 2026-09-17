@@ -1,8 +1,22 @@
 import {
+  useState
+} from "react";
+
+
+import {
+  useAppState
+} from "../lib/AppState";
+
+
+import {
+  useNavigate
+} from "react-router-dom";
+
+
+import {
   Search,
   Mic,
   FileText,
-  Clock,
   CheckCircle2,
   MoreHorizontal,
   Plus
@@ -10,63 +24,209 @@ import {
 
 
 
+
+
 export function ConsultationsPage(){
 
 
 
-const consultations=[
+const navigate = useNavigate();
 
-{
-patient:"Max",
-species:"Golden Retriever",
-owner:"Sarah Williams",
-time:"Today • 10:30 AM",
-status:"AI Note Ready",
-duration:"08:42",
-},
 
-{
-patient:"Bella",
-species:"British Shorthair Cat",
-owner:"Michael Brown",
-time:"Today • 11:15 AM",
-status:"Recording",
-duration:"12:05",
-},
 
-{
-patient:"Charlie",
-species:"Labrador",
-owner:"Emma Johnson",
-time:"Yesterday • 03:20 PM",
-status:"Approved",
-duration:"06:30",
-},
+const {
+  consultations,
+  patients,
+  clients
+}=useAppState();
 
-{
-patient:"Luna",
-species:"Persian Cat",
-owner:"David Wilson",
-time:"Yesterday • 04:10 PM",
-status:"Pending Review",
-duration:"09:15",
-}
+
+
+
+
+const [search,setSearch] = useState("");
+
+
+
+const [activeFilter,setActiveFilter] = useState("All");
+
+
+
+const [menuOpen,setMenuOpen] = useState<string|null>(null);
+
+
+
+
+
+
+
+
+
+const consultationList = consultations.map(item=>{
+
+
+
+const patient =
+patients.find(
+p=>p.id===item.patientId
+);
+
+
+
+const client =
+clients.find(
+c=>c.id===item.clientId
+);
+
+
+
+
+
+return {
+
+
+...item,
+
+
+patientName:
+patient?.name || "Unknown Patient",
+
+
+species:
+patient?.species || "Unknown",
+
+
+
+owner:
+client
+?
+`${client.firstName} ${client.lastName}`
+:
+"Unknown Owner",
+
+
+
+time:
+
+item.consultationDate
+
+?
+
+new Date(
+item.consultationDate
+).toLocaleString()
+
+:
+
+"Unknown date"
+
+
+
+};
+
+
+
+});
+
+
+
+
+
+
+
+
+
+const filteredConsultations = consultationList.filter(item=>{
+
+
+const searchMatch =
+
+item.patientName
+.toLowerCase()
+.includes(
+search.toLowerCase()
+)
+
+||
+
+item.owner
+.toLowerCase()
+.includes(
+search.toLowerCase()
+);
+
+
+
+
+
+const filterMatch =
+
+activeFilter==="All"
+
+?
+
+true
+
+
+:
+
+activeFilter==="Draft"
+
+?
+
+item.status==="draft"
+
+
+:
+
+activeFilter==="Approved"
+
+?
+
+item.status==="approved"
+
+
+:
+
+true;
+
+
+
+
+
+return searchMatch && filterMatch;
+
+
+});
+
+
+const filters = [
+
+"All",
+
+"Draft",
+
+"Approved"
 
 ];
-
-
-
-
-
 return (
 
 <div className="space-y-8">
 
 
+{/* =========================
+    HEADER
+========================= */}
 
-{/* HEADER */}
 
-<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+<div className="
+flex
+flex-col
+gap-4
+md:flex-row
+md:items-center
+md:justify-between
+">
 
 
 <div>
@@ -84,15 +244,19 @@ Manage recordings, AI notes and clinical reviews.
 
 </p>
 
-
 </div>
 
 
 
 <button
 
+type="button"
+
+onClick={()=>navigate("/dashboard/consultations/new")}
+
 className="
 flex
+cursor-pointer
 items-center
 gap-2
 rounded-xl
@@ -101,6 +265,7 @@ px-5
 py-3
 font-semibold
 text-white
+transition
 hover:bg-teal-700
 "
 
@@ -119,8 +284,10 @@ New Consultation
 
 
 
+{/* =========================
+    SEARCH
+========================= */}
 
-{/* SEARCH */}
 
 <div className="
 flex
@@ -135,20 +302,64 @@ py-3
 ">
 
 
-<Search size={20} className="text-slate-400"/>
+<Search
+
+size={20}
+
+className="shrink-0 text-slate-400"
+
+/>
+
 
 
 <input
+
+type="text"
+
+value={search}
+
+onChange={(e)=>setSearch(e.target.value)}
 
 placeholder="Search patient or owner..."
 
 className="
 w-full
-outline-none
+bg-transparent
 text-sm
+text-slate-900
+outline-none
+placeholder:text-slate-400
 "
 
 />
+
+
+{
+
+search.length > 0 && (
+
+<button
+
+type="button"
+
+onClick={()=>setSearch("")}
+
+className="
+text-xs
+font-medium
+text-slate-400
+hover:text-slate-700
+"
+
+>
+
+Clear
+
+</button>
+
+)
+
+}
 
 
 </div>
@@ -157,40 +368,53 @@ text-sm
 
 
 
+{/* =========================
+    FILTER BUTTONS
+========================= */}
 
-{/* FILTERS */}
 
-<div className="flex gap-3 flex-wrap">
+<div className="flex flex-wrap gap-3">
 
 
 {
-[
-"All",
-"Recording",
-"AI Note Ready",
-"Pending Review",
-"Approved"
 
-].map(filter=>(
+filters.map(filter=>(
 
 
 <button
 
 key={filter}
 
-className="
+type="button"
+
+onClick={()=>setActiveFilter(filter)}
+
+className={`
+
+cursor-pointer
 rounded-full
 border
-border-slate-200
-bg-white
 px-4
 py-2
 text-sm
 font-medium
-text-slate-600
-hover:border-teal-500
-hover:text-teal-600
-"
+transition
+
+${
+
+activeFilter===filter
+
+?
+
+"border-teal-600 bg-teal-600 text-white shadow-sm"
+
+:
+
+"border-slate-200 bg-white text-slate-600 hover:border-teal-500 hover:text-teal-600"
+
+}
+
+`}
 
 >
 
@@ -204,44 +428,152 @@ hover:text-teal-600
 }
 
 
-
 </div>
 
 
 
 
 
+{/* =========================
+    RESULTS INFORMATION
+========================= */}
 
 
+<div className="
+flex
+items-center
+justify-between
+text-sm
+text-slate-500
+">
 
-{/* CONSULTATION LIST */}
+
+<p>
+
+Showing{" "}
+
+<span className="font-semibold text-slate-700">
+
+{filteredConsultations.length}
+
+</span>
+
+{" "}
+
+{
+
+filteredConsultations.length===1
+
+?
+
+"consultation"
+
+:
+
+"consultations"
+
+}
+
+</p>
+
+
+{
+
+activeFilter!=="All" && (
+
+<button
+
+type="button"
+
+onClick={()=>setActiveFilter("All")}
+
+className="
+font-medium
+text-teal-600
+hover:text-teal-700
+"
+
+>
+
+Clear filter
+
+</button>
+
+)
+
+}
+
+
+</div>
+
+{/* =========================
+    CONSULTATION LIST
+========================= */}
 
 
 <div className="space-y-4">
 
 
-
 {
-consultations.map((item)=>(
+
+filteredConsultations.length===0
+
+?
+
+(
+
+<div
+
+className="
+rounded-2xl
+border
+border-dashed
+border-slate-300
+bg-white
+p-10
+text-center
+text-slate-500
+"
+
+>
+
+No consultations found.
+
+Try changing your search or filter.
+
+</div>
+
+)
+
+:
+
+
+filteredConsultations.map(item=>(
 
 
 <div
 
-key={item.patient}
+key={item.id}
 
 className="
+relative
+cursor-pointer
 rounded-2xl
 border
 border-slate-200
 bg-white
 p-6
 shadow-sm
-hover:shadow-md
 transition
+hover:shadow-md
 "
 
+onClick={()=>navigate(`/dashboard/consultations/${item.id}`)}
 
 >
+
+
+
 
 
 <div className="
@@ -254,7 +586,10 @@ md:justify-between
 ">
 
 
-{/* LEFT */}
+
+
+
+{/* LEFT SIDE */}
 
 <div className="flex gap-4">
 
@@ -275,64 +610,74 @@ text-teal-600
 
 
 
+
+
 <div>
 
 
-<h3 className="text-lg font-semibold text-slate-900">
+<h3 className="
+text-lg
+font-semibold
+text-slate-900
+">
 
-{item.patient}
+{item.patientName}
 
 </h3>
 
 
-<p className="text-sm text-slate-500">
 
-{item.species} • {item.owner}
+
+<p className="
+text-sm
+text-slate-500
+">
+
+{item.species}
+
+{" • "}
+
+{item.owner}
 
 </p>
 
 
-<p className="mt-2 flex items-center gap-2 text-sm text-slate-400">
 
-<Clock size={14}/>
+
+<p className="
+mt-2
+text-sm
+text-slate-400
+">
 
 {item.time}
 
 </p>
 
 
-</div>
-
 
 </div>
 
 
-
-
-
-{/* RIGHT */}
-
-<div className="flex items-center gap-5">
-
-
-<div className="text-right">
-
-
-<p className="text-sm text-slate-500">
-
-Duration
-
-</p>
-
-
-<p className="font-semibold">
-
-{item.duration}
-
-</p>
-
-
 </div>
+
+
+
+
+
+
+
+{/* RIGHT SIDE */}
+
+<div className="
+flex
+items-center
+gap-4
+"
+
+onClick={(e)=>e.stopPropagation()}
+
+>
 
 
 
@@ -351,25 +696,19 @@ py-2
 text-sm
 font-medium
 
+
 ${
 
-item.status==="Approved"
+item.status==="approved"
 
 ?
 
 "bg-green-50 text-green-700"
 
+
 :
-
-item.status==="Recording"
-
-?
 
 "bg-red-50 text-red-700"
-
-:
-
-"bg-teal-50 text-teal-700"
 
 }
 
@@ -379,7 +718,8 @@ item.status==="Recording"
 
 
 {
-item.status==="Approved"
+
+item.status==="approved"
 
 ?
 
@@ -401,9 +741,42 @@ item.status==="Approved"
 
 
 
+
+
+{/* THREE DOT MENU */}
+
+
+
+<div className="relative">
+
+
+
 <button
 
+type="button"
+
+onClick={()=>{
+
+
+setMenuOpen(
+
+menuOpen===item.id
+
+?
+
+null
+
+:
+
+item.id
+
+);
+
+
+}}
+
 className="
+cursor-pointer
 rounded-lg
 p-2
 hover:bg-slate-100
@@ -416,11 +789,151 @@ hover:bg-slate-100
 </button>
 
 
-</div>
+
+
+
+{
+
+
+menuOpen===item.id && (
+
+
+<div
+
+className="
+absolute
+right-0
+z-20
+mt-2
+w-48
+rounded-xl
+border
+border-slate-200
+bg-white
+p-2
+shadow-lg
+"
+
+>
+
+
+
+<button
+
+type="button"
+
+onClick={()=>navigate(`/dashboard/consultations/${item.id}`)}
+
+className="
+block
+w-full
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+text-slate-700
+hover:bg-slate-50
+"
+
+>
+
+Open Consultation
+
+</button>
+
+
+
+
+
+<button
+
+type="button"
+
+onClick={()=>navigate(`/dashboard/consultations/${item.id}`)}
+
+className="
+block
+w-full
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+text-slate-700
+hover:bg-slate-50
+"
+
+>
+
+Edit Draft
+
+</button>
+
+
+
+
+
+
+{
+
+item.status==="draft" && (
+
+
+<button
+
+type="button"
+
+onClick={()=>navigate(`/dashboard/consultations/${item.id}`)}
+
+className="
+block
+w-full
+rounded-lg
+px-3
+py-2
+text-left
+text-sm
+text-teal-600
+hover:bg-teal-50
+"
+
+>
+
+Review & Approve
+
+</button>
+
+
+)
+
+}
 
 
 
 </div>
+
+
+)
+
+
+}
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+</div>
+
 
 
 
@@ -438,10 +951,10 @@ hover:bg-slate-100
 
 
 
+
+
 </div>
 
-
 );
-
 
 }

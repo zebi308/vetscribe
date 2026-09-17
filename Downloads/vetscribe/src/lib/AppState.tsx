@@ -14,8 +14,10 @@ import {
   loadMembership,
   loadPracticeData,
   loadAuditLogs,
-  loadProfiles
+  loadProfiles,
+  createConsultationRecord
 } from "./supabase/repository";
+
 
 
 import type {
@@ -35,13 +37,15 @@ import type {
 
 
 
+
+
+
 interface AppStateContextType {
 
 
   currentUser: Profile | null;
 
   practice: Practice | null;
-
 
 
   profiles: Profile[];
@@ -89,7 +93,7 @@ interface AppStateContextType {
 
   createConsultation(
     patientId:string
-  ):string;
+  ):Promise<string>;
 
 
 
@@ -134,6 +138,18 @@ interface AppStateContextType {
 
 
 
+  addClient(
+    client:Client
+  ):Promise<void>;
+
+
+
+  addPatient(
+    patient:Patient
+  ):Promise<void>;
+
+
+
 }
 
 
@@ -143,9 +159,13 @@ interface AppStateContextType {
 
 
 
+
 const AppStateContext =
+
 createContext<AppStateContextType | undefined>(
+
 undefined
+
 );
 
 
@@ -157,71 +177,97 @@ undefined
 
 
 export function AppStateProvider({
+
 children
+
 }:{
+
 children:ReactNode
+
 }){
 
 
 
+
+
 const [currentUser,setCurrentUser]
+
 =
+
 useState<Profile|null>(null);
 
 
 
 const [practice,setPractice]
+
 =
+
 useState<Practice|null>(null);
 
 
 
-
 const [profiles,setProfiles]
+
 =
+
 useState<Profile[]>([]);
 
 
 
 const [clients,setClients]
+
 =
+
 useState<Client[]>([]);
 
 
 
 const [patients,setPatients]
+
 =
+
 useState<Patient[]>([]);
 
 
 
 const [consultations,setConsultations]
+
 =
+
 useState<Consultation[]>([]);
 
 
 
 const [medicines,setMedicines]
+
 =
+
 useState<Medicine[]>([]);
 
 
 
 const [ownerSummaries,setOwnerSummaries]
+
 =
+
 useState<OwnerSummary[]>([]);
 
 
 
 const [versions,setVersions]
+
 =
+
 useState<ClinicalNoteVersion[]>([]);
 
 
 
 const [auditLogs,setAuditLogs]
+
 =
+
 useState<AuditLog[]>([]);
+
 
 
 
@@ -252,13 +298,14 @@ return;
 
 
 
-
 const {
 
 data
 
 }
+
 =
+
 await supabase.auth.getSession();
 
 
@@ -267,12 +314,15 @@ await supabase.auth.getSession();
 
 if(data.session?.user){
 
+
 await loadUser(
+
 data.session.user.id
+
 );
 
-}
 
+}
 
 
 }
@@ -286,31 +336,33 @@ data.session.user.id
 
 
 async function loadUser(
-authUserId:string
+userId:string
 ){
 
 
 const membership =
-await loadMembership(
-authUserId
-);
+
+await loadMembership(userId);
 
 
 
 setCurrentUser(
+
 membership.profile
+
 );
 
 
 
 setPractice(
+
 membership.practice
+
 );
 
 
 
 await loadAppData();
-
 
 
 }
@@ -330,65 +382,56 @@ try{
 
 
 const data =
+
 await loadPracticeData();
 
 
 
-setClients(
-data.clients
-);
+setClients(data.clients);
 
 
 
-setPatients(
-data.patients
-);
+setPatients(data.patients);
 
 
 
-setConsultations(
-data.consultations
-);
+setConsultations(data.consultations);
 
 
 
-setMedicines(
-data.medicines
-);
+setMedicines(data.medicines);
 
 
 
-setOwnerSummaries(
-data.ownerSummaries
-);
+setOwnerSummaries(data.ownerSummaries);
 
 
 
-setVersions(
-data.versions
-);
+setVersions(data.versions);
+
+
 
 
 
 const logs =
+
 await loadAuditLogs();
 
 
 
-setAuditLogs(
-logs
-);
+setAuditLogs(logs);
+
+
 
 
 
 const allProfiles =
+
 await loadProfiles();
 
 
 
-setProfiles(
-allProfiles
-);
+setProfiles(allProfiles);
 
 
 
@@ -396,10 +439,15 @@ allProfiles
 
 catch(error){
 
+
 console.error(
+
 "DATA LOAD ERROR",
+
 error
+
 );
+
 
 }
 
@@ -418,6 +466,8 @@ return false;
 
 
 
+
+
 const {
 
 data,
@@ -425,6 +475,7 @@ data,
 error
 
 }
+
 =
 await supabase.auth.signInWithPassword({
 
@@ -436,30 +487,43 @@ password
 
 
 
+
+
 if(error){
+
 
 console.error(
 "LOGIN ERROR",
 error
 );
 
+
 return false;
 
+
 }
+
+
+
 
 
 
 if(data.user){
 
+
 await loadUser(
 data.user.id
 );
+
 
 }
 
 
 
+
+
 return true;
+
 
 
 }
@@ -477,11 +541,14 @@ form:any
 ):Promise<void>{
 
 
+
 if(!supabase)
 
 throw new Error(
 "Supabase not configured"
 );
+
+
 
 
 
@@ -494,6 +561,7 @@ data:userData,
 error:userError
 
 }
+
 =
 await supabase.auth.signUp({
 
@@ -514,6 +582,7 @@ throw userError;
 
 
 
+
 if(!userData.user)
 
 throw new Error(
@@ -525,15 +594,20 @@ throw new Error(
 
 
 
+
+
 let {
 
 data:{
 session
+
 }
 
 }
+
 =
 await supabase.auth.getSession();
+
 
 
 
@@ -543,6 +617,7 @@ if(!session){
 
 
 const retry =
+
 await supabase.auth.signInWithPassword({
 
 email:form.email,
@@ -552,11 +627,11 @@ password:form.password
 });
 
 
-session =
-retry.data.session;
+session = retry.data.session;
 
 
 }
+
 
 
 
@@ -592,7 +667,6 @@ form.practiceName
 +
 
 Date.now();
-
 
 
 
@@ -644,10 +718,10 @@ email:form.email
 
 
 
+
 if(practiceError)
 
 throw practiceError;
-
 
 
 
@@ -699,6 +773,7 @@ throw profileError;
 
 
 
+
 await loadUser(
 userData.user.id
 );
@@ -718,9 +793,12 @@ userData.user.id
 async function logout(){
 
 
+
 if(supabase){
 
+
 await supabase.auth.signOut();
+
 
 }
 
@@ -758,9 +836,14 @@ setAuditLogs([]);
 
 
 
-function createConsultation(
+async function createConsultation(
+
 patientId:string
-):string{
+
+):Promise<string>{
+
+
+
 
 
 if(!practice || !currentUser)
@@ -771,10 +854,19 @@ throw new Error(
 
 
 
+
+
+
+
 const patient =
+
 patients.find(
+
 p=>p.id===patientId
+
 );
+
+
 
 
 
@@ -786,10 +878,19 @@ throw new Error(
 
 
 
+
+
+
+
 const client =
+
 clients.find(
+
 c=>c.id===patient.clientId
+
 );
+
+
 
 
 
@@ -801,38 +902,65 @@ throw new Error(
 
 
 
+
+
+
+
 const id =
+
 crypto.randomUUID();
+
+
+
+
+
 
 
 
 const consultation:Consultation={
 
+
+
 id,
+
 
 practiceId:practice.id,
 
+
 patientId,
+
 
 clientId:client.id,
 
+
 createdBy:currentUser.id,
+
 
 treatingVetId:currentUser.id,
 
+
 consultationDate:
+
 new Date().toISOString(),
+
 
 status:"draft",
 
+
 captureType:"typed",
+
 
 transcript:"",
 
+
 updatedAt:
+
 new Date().toISOString(),
 
+
 version:0
+
+
 
 };
 
@@ -841,18 +969,42 @@ version:0
 
 
 
-setConsultations(
-prev=>[
-consultation,
-...prev
-]
+
+
+const savedConsultation =
+
+await createConsultationRecord(
+
+consultation
+
 );
 
 
 
 
 
-return id;
+
+
+
+setConsultations(
+
+prev=>[
+
+savedConsultation,
+
+...prev
+
+]
+
+);
+
+
+
+
+
+
+
+return savedConsultation.id;
 
 
 
@@ -867,13 +1019,17 @@ return id;
 
 
 async function updateConsultation(
+
 id:string,
+
 changes:Partial<Consultation>
+
 ){
 
 
 
 setConsultations(
+
 prev=>
 
 prev.map(item=>
@@ -889,6 +1045,7 @@ item.id===id
 ...changes,
 
 updatedAt:
+
 new Date().toISOString()
 
 }
@@ -905,9 +1062,15 @@ item
 
 
 
+
+
+
 if(!supabase)
 
 return;
+
+
+
 
 
 
@@ -921,13 +1084,17 @@ await supabase
 ...changes,
 
 updated_at:
+
 new Date().toISOString()
 
 })
 
 .eq(
+
 "id",
+
 id
+
 );
 
 
@@ -943,22 +1110,32 @@ id
 
 
 async function saveDraft(
+
 id:string,
+
 draft:ClinicalDraft
+
 ){
 
 
 
 const consultation =
+
 consultations.find(
+
 x=>x.id===id
+
 );
+
+
 
 
 
 if(!consultation)
 
 return;
+
+
 
 
 
@@ -995,9 +1172,13 @@ item
 
 
 
+
+
 if(!supabase)
 
 return;
+
+
 
 
 
@@ -1014,6 +1195,7 @@ consultation_id:id,
 structured_content:draft,
 
 version:
+
 consultation.version || 0
 
 });
@@ -1021,17 +1203,36 @@ consultation.version || 0
 
 
 }
+
+
+
+
+
+
+
+
+
 async function approveConsultation(
+
 id:string,
+
 draft:ClinicalDraft,
+
 reason?:string
+
 ){
 
 
+
 const consultation =
+
 consultations.find(
+
 x=>x.id===id
+
 );
+
+
 
 
 
@@ -1043,7 +1244,12 @@ throw new Error(
 
 
 
+
+
+
+
 const updated:Partial<Consultation>={
+
 
 
 status:"approved",
@@ -1053,15 +1259,19 @@ clinicalNote:draft,
 
 
 approvedBy:
+
 currentUser?.id,
 
 
 approvedAt:
+
 new Date().toISOString(),
 
 
 version:
-(consultation.version || 0) + 1
+
+(consultation.version || 0)+1
+
 
 
 };
@@ -1071,10 +1281,17 @@ version:
 
 
 
+
+
 await updateConsultation(
+
 id,
+
 updated
+
 );
+
+
 
 
 
@@ -1104,12 +1321,15 @@ structured_content:draft,
 approved_by:currentUser?.id,
 
 approved_at:
+
 new Date().toISOString(),
 
 version:
+
 (consultation.version || 0)+1,
 
 change_reason:
+
 reason || null
 
 });
@@ -1117,19 +1337,9 @@ reason || null
 
 
 }
-
-
-
-
-
-
-
-
-
 async function addOwnerSummary(
 summary:OwnerSummary
 ){
-
 
 
 setOwnerSummaries(
@@ -1145,10 +1355,10 @@ summary,
 
 
 
-
 if(!supabase)
 
 return;
+
 
 
 
@@ -1203,6 +1413,7 @@ item
 )
 
 );
+
 
 
 
@@ -1286,11 +1497,159 @@ await supabase
 
 
 
+async function addClient(
+client:Client
+){
+
+
+
+setClients(
+
+prev=>[
+client,
+...prev
+]
+
+);
+
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+
+
+
+await supabase
+
+.from("clients")
+
+.insert({
+
+id:client.id,
+
+practice_id:client.practiceId,
+
+first_name:client.firstName,
+
+last_name:client.lastName,
+
+address_line_1:"",
+
+address_line_2:"",
+
+city:"",
+
+postcode:client.postcode,
+
+phone:client.phone,
+
+email:client.email
+
+});
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function addPatient(
+patient:Patient
+){
+
+
+
+setPatients(
+
+prev=>[
+patient,
+...prev
+]
+
+);
+
+
+
+
+
+
+
+if(!supabase)
+
+return;
+
+
+
+
+
+
+
+await supabase
+
+.from("patients")
+
+.insert({
+
+id:patient.id,
+
+practice_id:patient.practiceId,
+
+client_id:patient.clientId,
+
+name:patient.name,
+
+species:patient.species,
+
+breed:patient.breed,
+
+sex:patient.sex,
+
+neutered:patient.neutered,
+
+date_of_birth:patient.dateOfBirth,
+
+microchip_number:patient.microchipNumber,
+
+colour:patient.colour,
+
+weight_kg:patient.weightKg
+
+});
+
+
+
+}
+
+
+
+
+
+
+
+
+
 return (
 
 <AppStateContext.Provider
 
 value={{
+
+
 
 currentUser,
 
@@ -1322,7 +1681,9 @@ register,
 logout,
 
 
+
 refreshData:loadAppData,
+
 
 
 createConsultation,
@@ -1333,11 +1694,21 @@ saveDraft,
 
 approveConsultation,
 
+
+
 addOwnerSummary,
 
 updateOwnerSummary,
 
-addMedicine
+addMedicine,
+
+
+
+addClient,
+
+addPatient
+
+
 
 }}
 
@@ -1366,8 +1737,12 @@ addMedicine
 export function useAppState(){
 
 
+
 const context =
+
 useContext(AppStateContext);
+
+
 
 
 
@@ -1379,7 +1754,10 @@ throw new Error(
 
 
 
+
+
 return context;
+
 
 
 }

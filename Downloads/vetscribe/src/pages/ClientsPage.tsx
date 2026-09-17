@@ -6,61 +6,216 @@ import {
   PawPrint,
   CalendarDays,
   MoreHorizontal,
-  Plus
+  Plus,
+  Eye,
+  FileText
 } from "lucide-react";
+
+
+import {
+  useState
+} from "react";
+
+
+import {
+  useNavigate
+} from "react-router-dom";
+
+
+import {
+  useAppState
+} from "../lib/AppState";
+
+
 
 
 
 export function ClientsPage(){
 
 
-
-const clients = [
-
-{
-name:"Sarah Williams",
-email:"sarah.williams@email.com",
-phone:"+44 7700 900123",
-pets:2,
-lastVisit:"Today",
-status:"Active"
-},
-
-
-{
-name:"Michael Brown",
-email:"michael.brown@email.com",
-phone:"+44 7700 900456",
-pets:1,
-lastVisit:"12 Sep 2026",
-status:"Active"
-},
-
-
-{
-name:"Emma Johnson",
-email:"emma.johnson@email.com",
-phone:"+44 7700 900789",
-pets:3,
-lastVisit:"05 Sep 2026",
-status:"Follow Up"
-},
-
-
-{
-name:"David Wilson",
-email:"david.wilson@email.com",
-phone:"+44 7700 900321",
-pets:1,
-lastVisit:"01 Sep 2026",
-status:"Active"
-}
-
-
-];
+const navigate = useNavigate();
 
 
 
+const {
+  clients,
+  patients,
+  consultations
+}=useAppState();
+
+
+
+
+const [search,setSearch] =
+useState("");
+
+
+
+const [menuOpen,setMenuOpen] =
+useState<string | null>(null);
+
+
+
+
+
+
+
+const clientList = clients
+
+.filter((client)=>{
+
+
+const name =
+
+`${client.firstName} ${client.lastName}`
+
+.toLowerCase();
+
+
+
+const email =
+
+(client.email || "")
+
+.toLowerCase();
+
+
+
+const phone =
+
+(client.phone || "")
+
+.toLowerCase();
+
+
+
+const query =
+
+search.toLowerCase();
+
+
+
+
+return (
+
+name.includes(query)
+
+||
+
+email.includes(query)
+
+||
+
+phone.includes(query)
+
+);
+
+
+})
+
+.map((client)=>{
+
+
+
+
+
+const petsCount =
+
+patients.filter(
+
+(patient)=>
+
+patient.clientId === client.id
+
+).length;
+
+
+
+
+
+const visits =
+
+consultations
+
+.filter(
+
+(item)=>
+
+item.clientId === client.id
+
+)
+
+.sort(
+
+(a,b)=>
+
+
+new Date(b.consultationDate).getTime()
+
+-
+
+new Date(a.consultationDate).getTime()
+
+
+);
+
+
+
+
+
+
+return {
+
+
+...client,
+
+
+id:client.id,
+
+
+name:
+
+`${client.firstName} ${client.lastName}`,
+
+
+
+pets:
+
+petsCount,
+
+
+
+lastVisit:
+
+visits.length > 0
+
+?
+
+new Date(
+
+visits[0].consultationDate
+
+)
+
+.toLocaleDateString()
+
+:
+
+"No visits yet",
+
+
+
+status:
+
+"Active"
+
+
+
+};
+
+
+
+});
 
 
 
@@ -69,12 +224,7 @@ return (
 
 <div className="space-y-8">
 
-
-
-
-
-{/* HEADER */}
-
+  {/* HEADER */}
 
 <div className="
 flex
@@ -109,6 +259,8 @@ Manage pet owners, contact details and consultation history.
 
 <button
 
+onClick={()=>navigate("new")}
+
 className="
 flex
 items-center
@@ -139,8 +291,8 @@ Add Client
 
 
 
-{/* SEARCH */}
 
+{/* SEARCH */}
 
 <div className="
 flex
@@ -156,12 +308,24 @@ py-3
 
 
 <Search
+
 size={20}
+
 className="text-slate-400"
+
 />
 
 
+
 <input
+
+value={search}
+
+onChange={(e)=>
+
+setSearch(e.target.value)
+
+}
 
 placeholder="Search client name, email or phone..."
 
@@ -174,6 +338,7 @@ text-sm
 />
 
 
+
 </div>
 
 
@@ -184,8 +349,36 @@ text-sm
 
 
 
-{/* CLIENT GRID */}
+{/* CLIENT LIST */}
 
+
+{
+
+clientList.length === 0
+
+?
+
+<div
+
+className="
+rounded-2xl
+border
+border-dashed
+border-slate-300
+bg-white
+p-10
+text-center
+text-slate-500
+"
+
+>
+
+No clients found.
+
+</div>
+
+
+:
 
 
 <div className="
@@ -196,17 +389,18 @@ xl:grid-cols-3
 ">
 
 
-
 {
 
-clients.map((client)=>(
+clientList.map((client)=>(
+
 
 
 <div
 
-key={client.email}
+key={client.id}
 
 className="
+relative
 rounded-2xl
 border
 border-slate-200
@@ -217,8 +411,8 @@ hover:shadow-md
 transition
 "
 
->
 
+>
 
 
 <div className="
@@ -238,14 +432,39 @@ bg-teal-50
 text-teal-600
 ">
 
+
 <UserRound size={28}/>
+
 
 </div>
 
 
 
 
+
+<div className="relative">
+
+
 <button
+
+onClick={()=>
+
+
+setMenuOpen(
+
+menuOpen === client.id
+
+?
+
+null
+
+:
+
+client.id
+
+)
+
+}
 
 className="
 rounded-lg
@@ -261,8 +480,106 @@ hover:bg-slate-100
 
 
 
+
+
+{
+
+menuOpen === client.id &&
+
+
+<div
+
+className="
+absolute
+right-0
+top-11
+z-20
+w-48
+rounded-xl
+border
+bg-white
+shadow-lg
+p-2
+"
+
+>
+
+
+
+<button
+
+onClick={()=>navigate(
+
+`/clients/${client.id}`
+
+)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<Eye size={16}/>
+
+View Profile
+
+</button>
+
+
+
+
+
+<button
+
+onClick={()=>navigate(
+
+`/clients/${client.id}/records`
+
+)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<FileText size={16}/>
+
+Medical Records
+
+</button>
+
+
+
 </div>
 
+
+}
+
+
+
+</div>
+
+
+
+</div>
 
 
 
@@ -286,7 +603,6 @@ text-slate-900
 
 
 
-
 <div className="
 mt-5
 space-y-3
@@ -295,16 +611,11 @@ text-slate-600
 ">
 
 
-
-<div className="
-flex
-items-center
-gap-2
-">
+<div className="flex items-center gap-2">
 
 <Mail size={16}/>
 
-{client.email}
+{client.email || "No email"}
 
 </div>
 
@@ -312,15 +623,11 @@ gap-2
 
 
 
-<div className="
-flex
-items-center
-gap-2
-">
+<div className="flex items-center gap-2">
 
 <Phone size={16}/>
 
-{client.phone}
+{client.phone || "No phone"}
 
 </div>
 
@@ -328,12 +635,7 @@ gap-2
 
 
 
-
-<div className="
-flex
-items-center
-gap-2
-">
+<div className="flex items-center gap-2">
 
 <PawPrint size={16}/>
 
@@ -344,14 +646,7 @@ gap-2
 
 
 
-
-
-
-<div className="
-flex
-items-center
-gap-2
-">
+<div className="flex items-center gap-2">
 
 <CalendarDays size={16}/>
 
@@ -362,14 +657,6 @@ Last visit: {client.lastVisit}
 
 
 </div>
-
-
-
-
-
-
-
-
 
 <div className="
 mt-6
@@ -383,27 +670,15 @@ pt-4
 
 <span
 
-className={`
+className="
 rounded-full
+bg-green-50
 px-3
 py-1
 text-xs
 font-medium
-
-${
-client.status==="Active"
-
-?
-
-"bg-green-50 text-green-700"
-
-:
-
-"bg-yellow-50 text-yellow-700"
-
-}
-
-`}
+text-green-700
+"
 
 >
 
@@ -417,10 +692,17 @@ client.status==="Active"
 
 <button
 
+onClick={()=>navigate(
+
+`/clients/${client.id}`
+
+)}
+
 className="
 text-sm
 font-semibold
 text-teal-600
+hover:text-teal-800
 "
 
 >
@@ -437,9 +719,7 @@ View Profile
 
 
 
-
 </div>
-
 
 
 ))
@@ -448,13 +728,10 @@ View Profile
 }
 
 
-
-
 </div>
 
 
-
-
+}
 
 
 </div>

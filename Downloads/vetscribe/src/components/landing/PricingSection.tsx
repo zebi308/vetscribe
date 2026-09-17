@@ -372,7 +372,7 @@ Contact us
 
 
 <button
-onClick={()=>window.location.href="mailto:support@vetscribe.clariana.co.uk"}
+onClick={()=>window.location.href="mailto:vetscribe@clariana.co.uk"}
 >
 
 Contact Sales
