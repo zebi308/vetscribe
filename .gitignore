@@ -1,0 +1,20 @@
+.env
+# OS / Editor
+.DS_Store
+.Trash/
+.vscode/
+.idea/
+# Node
+node_modules/
+package-lock.json
+# Build
+dist/
+build/
+/.cache/
+
+# Tooling / caches
+.cache/
+.codex/
+.openclaw/
+.docker/
+.cache/plugins/
