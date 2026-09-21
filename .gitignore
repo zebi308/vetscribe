@@ -18,3 +18,5 @@ build/
 .openclaw/
 .docker/
 .cache/plugins/
+.vercel
+.env*
