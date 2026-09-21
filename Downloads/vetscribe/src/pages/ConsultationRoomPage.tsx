@@ -622,7 +622,7 @@ export function ConsultationRoomPage(){
     }
 
     return draft.missing_information.filter(
-      item =>
+      (item:any) =>
         item.severity === "high" &&
         !item.dismissed
     );
@@ -759,8 +759,10 @@ export function ConsultationRoomPage(){
         consultationId,
         title:followUpForm.title,
         dueDate:followUpForm.dueDate,
+        scheduledDate:followUpForm.dueDate,
         notes:followUpForm.notes,
         status:"scheduled",
+        createdBy:activeConsultation.treatingVetId,
         createdAt:new Date().toISOString()
       });
 

@@ -17,7 +17,9 @@ import {
 
 export function AuditPage(){
 
+const { auditLogs: appAuditLogs } = useAppState();
 
+const [search, setSearch] = useState("");
 
 const logs = [
 
@@ -73,6 +75,14 @@ status:"Completed"
 }
 
 ];
+
+
+const auditLogs = appAuditLogs.length ? appAuditLogs : logs;
+
+const filteredLogs = auditLogs.filter((log:any) => {
+  const text = `${log.action || ""} ${log.user || ""} ${log.type || ""}`.toLowerCase();
+  return text.includes(search.toLowerCase());
+});
 
 
 
@@ -445,7 +455,7 @@ No activity recorded yet.
 
 :
 
-filteredLogs.map((log)=>(
+filteredLogs.map((log:any)=>(
 
 
 <div

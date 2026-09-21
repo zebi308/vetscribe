@@ -281,6 +281,8 @@ export interface Consultation {
 
   status:ConsultationStatus;
 
+  archived?: boolean;
+
   captureType:'audio'|'typed'|'mixed';
 
   transcript:string;
@@ -382,6 +384,8 @@ export interface FollowUp {
   notes:string;
 
   scheduledDate:string;
+
+  dueDate?:string;
 
   status:FollowUpStatus;
 
@@ -558,26 +562,7 @@ export interface Prescription {
     | 'cancelled';
 
 }
-export type Role =
-  | 'vet'
-  | 'nurse'
-  | 'practice_manager'
-  | 'super_admin';
 
-
-export type ConsultationStatus =
-  | 'draft'
-  | 'transcribing'
-  | 'generating'
-  | 'awaiting_review'
-  | 'approved'
-  | 'cancelled';
-
-
-export type FollowUpStatus =
-  | "scheduled"
-  | "completed"
-  | "cancelled";
 
 
 /* =========================================================

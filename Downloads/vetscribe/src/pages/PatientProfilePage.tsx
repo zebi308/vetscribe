@@ -1523,7 +1523,8 @@ text-slate-500
 
       {activeMedicalModal === "vaccination" && (
         <AddVaccinationModal
-          patient={patient}
+          patientId={patient.id}
+          practiceId={patient.practiceId}
           onClose={() => setActiveMedicalModal(null)}
           onSave={async (data:any) => {
             await addVaccination({
@@ -1539,7 +1540,8 @@ text-slate-500
 
       {activeMedicalModal === "allergy" && (
         <AddAllergyModal
-          patient={patient}
+          patientId={patient.id}
+          practiceId={patient.practiceId}
           onClose={() => setActiveMedicalModal(null)}
           onSave={async (data:any) => {
             await addAllergy({
@@ -1555,7 +1557,8 @@ text-slate-500
 
       {activeMedicalModal === "condition" && (
         <AddConditionModal
-          patient={patient}
+          patientId={patient.id}
+          practiceId={patient.practiceId}
           onClose={() => setActiveMedicalModal(null)}
           onSave={async (data:any) => {
             await addCondition({
@@ -1571,7 +1574,10 @@ text-slate-500
 
       {activeMedicalModal === "prescription" && (
         <AddPrescriptionModal
-          patient={patient}
+          patientId={patient.id}
+          practiceId={patient.practiceId}
+          clientId={patient.clientId}
+          prescribingVetId={profiles.find((p)=>p.role==="vet")?.id || ""}
           onClose={() => setActiveMedicalModal(null)}
           onSave={async (data:any) => {
             await addPrescription({

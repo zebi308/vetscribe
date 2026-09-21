@@ -50,7 +50,14 @@ import type {
 interface AppStateContextType {
   currentUser: Profile | null;
   practice: Practice | null;
+  practices: Practice[];
   authLoading: boolean;
+
+  subscriptionPlans: any[];
+  subscriptions: any[];
+  invoices: any[];
+  payments: any[];
+  platformMetrics: any[];
 
   profiles: Profile[];
 
@@ -75,6 +82,11 @@ interface AppStateContextType {
   register(data: any): Promise<void>;
   logout(): Promise<void>;
   refreshData(): Promise<void>;
+
+  assignSubscription(payload:any): Promise<any>;
+  generateInvoice(payload:any): Promise<any>;
+  recordBusinessPayment(payload:any): Promise<any>;
+  getBusinessMetrics(): Promise<any>;
 
   createConsultation(patientId: string): Promise<string>;
   updateConsultation(
@@ -124,6 +136,8 @@ interface AppStateContextType {
     id: string,
     active: boolean
   ): Promise<void>;
+
+  changePracticeStatus(id:string,status:string): Promise<void>;
 
   addFollowUp(followUp: FollowUp): Promise<void>;
 
@@ -268,9 +282,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       id: crypto.randomUUID(),
       practiceId: practice?.id || "",
       action,
-      type,
-      status,
-      userId: currentUser?.id || "",
+      actorUserId: currentUser?.id || "",
+      entityType: type,
+      entityId: currentUser?.id || "",
+      description: action,
       createdAt: new Date().toISOString()
     } as AuditLog;
 
@@ -290,9 +305,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         id: log.id,
         practice_id: log.practiceId,
         action: log.action,
-        type: log.type,
-        status: log.status,
-        user_id: log.userId,
+        entity_type: log.entityType,
+        entity_id: log.entityId,
+        description: log.description,
+        actor_user_id: log.actorUserId,
         created_at: log.createdAt
       });
 
@@ -1429,55 +1445,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }
 
 
-  async function updateUserRole(id:string,role:string):Promise<void>{
-
-    if(currentUser?.id===id){
-      throw new Error("Cannot change your own role");
-    }
-
-    setProfiles(prev=>prev.map(p=>p.id===id ? ({...p,role} as Profile):p));
-
-    if(supabase){
-      const {error}=await supabase
-        .from("profiles")
-        .update({role})
-        .eq("id",id);
-
-      if(error) throw error;
-    }
-
-    await createAuditLog(
-      `User role updated: ${id} -> ${role}`,
-      "UPDATE"
-    );
-  }
-
-
-  async function toggleUserStatus(id:string,active:boolean):Promise<void>{
-
-    if(currentUser?.id===id && !active){
-      throw new Error("Cannot disable yourself");
-    }
-
-    setProfiles(prev=>prev.map(p=>p.id===id ? ({...p,isActive:active} as Profile):p));
-
-    if(supabase){
-      const {error}=await supabase
-        .from("profiles")
-        .update({is_active:active})
-        .eq("id",id);
-
-      if(error) throw error;
-    }
-
-    await createAuditLog(
-      `User status changed: ${id}`,
-      "UPDATE"
-    );
-  }
-
-
-
   // ================================
   // PHASE 13 BUSINESS WORKFLOWS
   // ================================
@@ -1574,6 +1541,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         prescriptions,
         appointments,
 
+        subscriptionPlans,
+        subscriptions,
+        invoices,
+        payments,
+        platformMetrics,
+
         login,
         register,
         logout,
@@ -1595,12 +1568,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         archiveMedicine,
 
         addClient,
+        deleteClient,
+        restoreClient,
+        permanentDeleteClient,
         addPatient,
         updatePatient,
+        deletePatient,
+        restorePatient,
+        permanentDeletePatient,
 
         updateUserRole,
         toggleUserStatus,
         changePracticeStatus,
+
+        assignSubscription,
+        generateInvoice,
+        recordBusinessPayment,
+        getBusinessMetrics,
 
         addFollowUp,
         updateFollowUp,

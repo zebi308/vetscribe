@@ -60,7 +60,7 @@ const filteredProfiles = profiles?.filter((profile:any)=>{
 });
 
 
- const practiceList = []; // replaced by real practices from AppState
+ const practiceList: any[] = []; // replaced by real practices from AppState
 
  /*
   Static practice data removed.

@@ -53,7 +53,9 @@ clients,
 
 patients,
 
-consultations
+consultations,
+
+deleteClient
 
 }=useAppState();
 
@@ -114,6 +116,10 @@ if(!confirmed) return;
 
 
 try{
+
+if(!client){
+  return;
+}
 
 await deleteClient(client.id);
 

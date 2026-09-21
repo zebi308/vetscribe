@@ -290,7 +290,7 @@ label="Client"
 
 value={form.clientId}
 
-onChange={(v)=>
+onChange={(v:string)=>
 update(
 "clientId",
 v
@@ -318,7 +318,7 @@ label="Patient"
 
 value={form.patientId}
 
-onChange={(v)=>
+onChange={(v:string)=>
 update(
 "patientId",
 v
@@ -350,7 +350,7 @@ label="Assigned Vet"
 
 value={form.assignedVetId}
 
-onChange={(v)=>
+onChange={(v:string)=>
 update(
 "assignedVetId",
 v
@@ -381,7 +381,7 @@ type="date"
 
 value={form.appointmentDate}
 
-onChange={(v)=>
+onChange={(v:string)=>
 update(
 "appointmentDate",
 v
@@ -400,7 +400,7 @@ type="time"
 
 value={form.appointmentTime}
 
-onChange={(v)=>
+onChange={(v:string)=>
   update(
     "appointmentTime",
     v
@@ -418,7 +418,7 @@ label="Reason"
 
 value={form.reason}
 
-onChange={(v)=>
+onChange={(v:string)=>
 update(
 "reason",
 v

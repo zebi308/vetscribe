@@ -100,7 +100,7 @@ export function OwnerSummaryPage(){
 
 
       await sendOwnerSummaryEmail(
-        summary.id
+        summary!.id
       );
 
 
