@@ -38,6 +38,7 @@ import { MedicationsPage } from "./pages/MedicationsPage";
 
 import { AddClientPage } from "./pages/AddClientPage";
 import { AddPatientPage } from "./pages/AddPatientPage";
+import { EditClientPage } from "./pages/EditClientPage";
 import { NewConsultationPage } from "./pages/NewConsultationPage";
 import { ConsultationRoomPage } from "./pages/ConsultationRoomPage";
 import { PatientProfilePage } from "./pages/PatientProfilePage";
@@ -349,6 +350,10 @@ element={<ClientProfilePage/>}
 
 />
 
+<Route
+  path="clients/:id/edit"
+  element={<EditClientPage/>}
+/>
 
 
 
@@ -584,7 +589,75 @@ element={<AdminPage/>}
 </Route>
 
 
+{/* =====================
+        BILLING
+===================== */}
 
+<Route
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "practice_manager",
+        "super_admin"
+      ]}
+    />
+  }
+>
+
+  <Route
+    path="billing"
+    element={<BillingPage/>}
+  />
+
+</Route>
+
+
+
+{/* =====================
+        SUBSCRIPTIONS
+===================== */}
+
+<Route
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "practice_manager",
+        "super_admin"
+      ]}
+    />
+  }
+>
+
+  <Route
+    path="subscriptions"
+    element={<SubscriptionPage/>}
+  />
+
+</Route>
+
+
+
+{/* =====================
+        ANALYTICS
+===================== */}
+
+<Route
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "practice_manager",
+        "super_admin"
+      ]}
+    />
+  }
+>
+
+  <Route
+    path="analytics"
+    element={<AnalyticsPage/>}
+  />
+
+</Route>
 
 
 

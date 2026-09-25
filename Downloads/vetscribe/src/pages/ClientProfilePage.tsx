@@ -6,7 +6,8 @@ import {
   CalendarDays,
   Stethoscope,
   FileText,
-  Trash2
+  Trash2,
+  Edit3
 } from "lucide-react";
 
 
@@ -418,7 +419,7 @@ Registered Pets
 
 onClick={()=>navigate(
 
-`/patients/new?client=${client.id}`
+`/dashboard/patients/new?client=${client.id}`
 
 )}
 
@@ -531,7 +532,7 @@ className="text-teal-600"
 
 onClick={()=>navigate(
 
-`/patients/${pet.id}`
+`/dashboard/patients/${pet.id}`
 
 )}
 
@@ -606,7 +607,7 @@ Consultation History
 
 onClick={()=>navigate(
 
-`/consultations/new?client=${client.id}`
+`/dashboard/consultations/new?client=${client.id}`
 
 )}
 
@@ -720,7 +721,7 @@ consultation.consultationDate
 
 onClick={()=>navigate(
 
-`/consultations/${consultation.id}`
+`/dashboard/consultations/${consultation.id}`
 
 )}
 

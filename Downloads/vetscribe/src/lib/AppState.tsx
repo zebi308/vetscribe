@@ -118,6 +118,7 @@ interface AppStateContextType {
   archiveMedicine(id: string): Promise<void>;
 
   addClient(client: Client): Promise<void>;
+  updateClient(id: string, changes: Partial<Client>): Promise<void>;
   deleteClient(id: string): Promise<void>;
   restoreClient(id: string): Promise<void>;
   permanentDeleteClient(id: string): Promise<void>;
@@ -1158,6 +1159,56 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  async function updateClient(
+    id: string,
+    changes: Partial<Client>
+  ): Promise<void> {
+
+    setClients((prev) =>
+      prev.map((client) =>
+        client.id === id
+          ? { ...client, ...changes }
+          : client
+      )
+    );
+
+
+    if (!supabase) return;
+
+
+    const updateData: any = {};
+
+
+    if (changes.firstName !== undefined)
+      updateData.first_name = changes.firstName;
+
+    if (changes.lastName !== undefined)
+      updateData.last_name = changes.lastName;
+
+    if (changes.email !== undefined)
+      updateData.email = changes.email;
+
+    if (changes.phone !== undefined)
+      updateData.phone = changes.phone;
+
+    if (changes.postcode !== undefined)
+      updateData.postcode = changes.postcode;
+
+    if (changes.address !== undefined)
+      updateData.address_line_1 = changes.address;
+
+
+    const { error } = await supabase
+      .from("clients")
+      .update(updateData)
+      .eq("id", id);
+
+
+    if (error) throw error;
+
+  }
+
+
   async function deleteClient(
     id: string
   ): Promise<void> {
@@ -1568,6 +1619,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         archiveMedicine,
 
         addClient,
+        updateClient,
         deleteClient,
         restoreClient,
         permanentDeleteClient,

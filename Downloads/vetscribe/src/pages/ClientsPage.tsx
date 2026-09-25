@@ -9,7 +9,8 @@ import {
   Plus,
   Eye,
   FileText,
-  Trash2
+  Trash2,
+  Edit3
 } from "lucide-react";
 
 
@@ -613,6 +614,32 @@ Medical Records
 
 </button>
 
+
+
+
+<button
+
+onClick={() => navigate(`/dashboard/clients/${client.id}/edit`)}
+
+className="
+flex
+w-full
+items-center
+gap-2
+rounded-lg
+px-3
+py-2
+text-sm
+hover:bg-slate-100
+"
+
+>
+
+<Edit3 size={16}/>
+
+Edit Client
+
+</button>
 
 
 
