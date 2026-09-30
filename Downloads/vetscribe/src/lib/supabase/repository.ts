@@ -10,8 +10,7 @@ import type {
   OwnerSummary,
   Patient,
   Practice,
-  Profile,
-  Template
+  Profile
 } from "../../types/models";
 
 

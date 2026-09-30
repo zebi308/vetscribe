@@ -360,9 +360,9 @@ export function ConsultationRoomPage(){
     }
 
     try{
-
+      
       setTranscribing(true);
-
+      if(!supabase) throw new Error("Supabase not configured");
       const {
         data:{
           session

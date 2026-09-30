@@ -404,7 +404,7 @@ text-teal-600
 
 <h3 className="font-semibold text-slate-900">
 
-{person.name}
+{person.firstName} {person.lastName}
 
 </h3>
 

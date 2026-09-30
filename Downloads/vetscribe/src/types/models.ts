@@ -53,6 +53,10 @@ export interface Practice {
 
   logoUrl?:string;
 
+  country?:string;
+
+  referral_code?:string;
+
 }
 
 

@@ -285,7 +285,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase?.removeChannel(channel);
     };
 
   }, [practice?.id]);
@@ -801,25 +801,22 @@ console.log(
   "CURRENT SESSION BEFORE PRACTICE INSERT:",
   await supabase.auth.getSession()
 );
-    const practiceId = crypto.randomUUID();
+    const { data: practiceData, error: practiceError } = await supabase
+      .from("practices")
+      .insert({
+        name: form.practiceName,
+        slug,
+        subdomain: slug,
+        address_line_1: "",
+        city: "",
+        postcode: "",
+        phone: "",
+        email: form.email,
+      })
+      .select()
+      .single();
 
-const { error: practiceError } = await supabase
-  .from("practices")
-  .insert({
-    id: practiceId,
-    name: form.practiceName,
-    slug,
-    subdomain: slug,
-    address_line_1: "",
-    city: "",
-    postcode: "",
-    phone: "",
-    email: form.email,
-  });
-
-if (practiceError) throw practiceError;
-
-const practiceData = { id: practiceId };
+    if (practiceError) throw practiceError;
 
     const { error: profileError } = await supabase.from("profiles").insert({
       auth_user_id: userData.user.id,
@@ -2196,9 +2193,11 @@ async function updatePractice(data:any): Promise<void>{
 
     // Prevent generating a new code every time.
     // Existing clinics should always keep the same referral code.
-    if (practice.referral_code) {
-      setReferralCode(practice.referral_code);
-      return practice.referral_code;
+    const existingReferralCode = (practice as any).referral_code as string | undefined;
+
+    if (existingReferralCode) {
+      setReferralCode(existingReferralCode);
+      return existingReferralCode;
     }
 
     const base =
@@ -2573,6 +2572,7 @@ async function updatePractice(data:any): Promise<void>{
         subscriptions,
         invoices,
         payments,
+        aiUsage,
         platformMetrics,
 
         login,

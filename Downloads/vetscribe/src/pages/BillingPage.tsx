@@ -100,7 +100,7 @@ export function BillingPage(){
 
       };
 
-
+      if(!supabase) throw new Error("Supabase not configured");
       const {data,error} =
       await supabase.functions.invoke(
         "create-invoice",

@@ -28,7 +28,7 @@ export function StaffProfilePage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-8">
         <h1 className="text-3xl font-bold text-slate-900">
-          {staff.firstName || staff.first_name} {staff.lastName || staff.last_name}
+          {staff.firstName} {staff.lastName}
         </h1>
 
         <div className="mt-6 space-y-4">
