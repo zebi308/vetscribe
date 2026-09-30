@@ -35,7 +35,9 @@ patients,
 
 clients,
 
-createConsultation
+createConsultation,
+
+checkSubscriptionLimit
 
 }=useAppState();
 
@@ -128,30 +130,37 @@ return;
 try{
 
 
+const consultationLimit =
+checkSubscriptionLimit("consultations");
+
+
+if(!consultationLimit.allowed){
+
+console.error(
+"CONSULTATION LIMIT REACHED"
+);
+
+return;
+
+}
+
+
 setLoading(true);
 
 
 
 
 
-const consultationId =
+const consultationId = await createConsultation(selected);
 
-await createConsultation(
+console.log("CREATED CONSULTATION ID:", consultationId);
 
-selected
+if (!consultationId) {
+  console.error("No consultation id returned from createConsultation");
+  return;
+}
 
-);
-
-
-
-
-
-
-navigate(
-
-`/dashboard/consultations/${consultationId}`
-
-);
+navigate(`/dashboard/consultations/${consultationId}`);
 
 
 

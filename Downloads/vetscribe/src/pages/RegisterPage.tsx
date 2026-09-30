@@ -40,7 +40,8 @@ const navigate = useNavigate();
 
 
 const {
-register
+register,
+validateReferralCode
 }=useAppState();
 
 
@@ -65,7 +66,9 @@ email:"",
 
 password:"",
 
-role:"vet"
+role:"practice_manager",
+
+referralCode:""
 
 });
 
@@ -127,7 +130,25 @@ setLoading(true);
 try{
 
 
-await register(form);
+let referralData = null;
+
+
+if(form.referralCode?.trim()){
+
+  referralData = await validateReferralCode(
+    form.referralCode.trim()
+  );
+
+}
+
+
+await register({
+      ...form,
+      referralData
+    });
+
+
+
 
 
 showToast(
@@ -628,151 +649,38 @@ text-sm
 font-medium
 ">
 
-Account Type
+Referral Code (Optional)
 
 </label>
-
-
-
-<div className="
-mt-3
-grid
-gap-3
-md:grid-cols-2
-">
-
-
-
-<label className="
-flex
-cursor-pointer
-gap-3
-rounded-xl
-border
-p-4
-">
 
 
 <input
 
-type="radio"
-
-name="role"
-
-value="vet"
-
-checked={
-form.role==="vet"
-}
+value={form.referralCode}
 
 onChange={(e)=>
 updateField(
-"role",
+"referralCode",
 e.target.value
 )
 }
 
-
-/>
-
-
-
-<div>
-
-
-<p className="font-medium">
-
-Veterinarian
-
-</p>
-
-
-<p className="text-xs text-slate-500">
-
-Clinical access
-
-</p>
-
-
-</div>
-
-
-</label>
-
-
-
-
-
-
-
-<label className="
-flex
-cursor-pointer
-gap-3
+className="
+mt-2
+w-full
 rounded-xl
 border
-p-4
-">
+px-4
+py-3
+outline-none
+"
 
-
-<input
-
-type="radio"
-
-name="role"
-
-value="practice_manager"
-
-checked={
-form.role==="practice_manager"
-}
-
-onChange={(e)=>
-updateField(
-"role",
-e.target.value
-)
-}
-
+placeholder="Enter referral code"
 
 />
 
 
-
-<div>
-
-
-<p className="font-medium">
-
-Practice Manager
-
-</p>
-
-
-<p className="text-xs text-slate-500">
-
-Manage practice
-
-</p>
-
-
 </div>
-
-
-</label>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
-
-
 
 
 

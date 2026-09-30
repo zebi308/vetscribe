@@ -10,7 +10,8 @@ import type {
   OwnerSummary,
   Patient,
   Practice,
-  Profile
+  Profile,
+  Template
 } from "../../types/models";
 
 
@@ -1334,7 +1335,15 @@ export async function loadSubscriptions(){
     .select("*")
     .order("created_at",{ascending:false});
 
-  if(error) throw error;
+  if(error) {
+    console.error("LOAD SUBSCRIPTIONS ERROR:", error);
+    throw error;
+  }
+
+  console.log(
+    "RAW SUBSCRIPTIONS FROM DATABASE:",
+    data
+  );
 
   return data || [];
 
@@ -1547,3 +1556,184 @@ export async function calculateBusinessMetrics(){
 
 }
 
+
+
+// ================================
+// TEMPLATES MANAGEMENT
+// ================================
+
+export async function loadTemplates(){
+  const {data,error}=await db()
+    .from("templates")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error) throw error;
+  return data || [];
+}
+
+export async function createTemplate(payload:any){
+  const {data,error}=await db()
+    .from("templates")
+    .insert(payload)
+    .select()
+    .single();
+
+  if(error) throw error;
+  return data;
+}
+
+export async function updateTemplate(id:string,payload:any){
+  const {data,error}=await db()
+    .from("templates")
+    .update(payload)
+    .eq("id",id)
+    .select()
+    .single();
+
+  if(error) throw error;
+  return data;
+}
+
+export async function deleteTemplate(id:string){
+  const {error}=await db()
+    .from("templates")
+    .delete()
+    .eq("id",id);
+
+  if(error) throw error;
+}
+
+
+// ================================
+// REFERRAL SYSTEM - STAGE 1
+// ================================
+
+export async function generateReferralCode(
+  practiceName:string
+){
+
+  const clean =
+    (practiceName || "VETSCRIBE")
+    .replace(/[^a-zA-Z0-9]/g,"")
+    .toUpperCase()
+    .slice(0,8);
+
+  return `${clean}${Math.floor(1000 + Math.random() * 9000)}`;
+
+}
+
+
+
+export async function savePracticeReferralCode(
+  practiceId:string,
+  referralCode:string
+){
+
+  const {data,error}=await db()
+    .from("practices")
+    .update({
+      referral_code: referralCode
+    })
+    .eq(
+      "id",
+      practiceId
+    )
+    .select()
+    .single();
+
+
+  if(error) throw error;
+
+  return data;
+
+}
+
+
+
+export async function validateReferralCode(
+  referralCode:string
+){
+
+  const {data,error}=await db()
+    .from("practices")
+    .select("id,name,referral_code")
+    .eq(
+      "referral_code",
+      referralCode
+    )
+    .single();
+
+
+  if(error) throw error;
+
+  return {
+    practiceId:data.id,
+    practiceName:data.name
+  };
+
+}
+
+
+
+export async function createReferralRecord(
+  payload:any
+){
+
+  const {data,error}=await db()
+    .from("referrals")
+    .insert(payload)
+    .select()
+    .single();
+
+
+  if(error) throw error;
+
+  return data;
+
+}
+
+
+
+export async function loadReferrals(
+  practiceId:string
+){
+
+  const {data,error}=await db()
+    .from("referrals")
+    .select("*")
+    .eq(
+      "referrer_practice_id",
+      practiceId
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if(error) throw error;
+
+  return data || [];
+
+}
+
+
+
+// ================================
+// AI USAGE TRACKING
+// ================================
+
+export async function loadAIUsage(){
+
+  const {data,error}=await db()
+    .from("ai_usage")
+    .select("*");
+
+  if(error) throw error;
+
+  return data || [];
+
+}

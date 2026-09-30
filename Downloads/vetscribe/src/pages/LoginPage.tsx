@@ -83,7 +83,7 @@ navigate("/dashboard");
 else{
 
 const message =
-"Invalid email or password";
+"This account may be deactivated or the email/password is incorrect. If your account was disabled by your practice administrator, please contact them.";
 
 setError(
 message

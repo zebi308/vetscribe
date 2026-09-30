@@ -7,48 +7,41 @@ import {
   CheckCircle2
 } from "lucide-react";
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppState } from "../lib/AppState";
+
 
 
 export function StaffPage(){
 
 
 
-const staff = [
+const { profiles, currentUser, createStaffMember, toggleUserStatus } = useAppState();
 
-{
-name:"Dr. James Anderson",
-email:"james@vetscribe.co.uk",
-role:"Veterinarian",
-status:"Active"
-},
+const navigate = useNavigate();
 
+const [form, setForm] = useState({
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+});
 
-{
-name:"Emily Carter",
-email:"emily@vetscribe.co.uk",
-role:"Veterinary Nurse",
-status:"Active"
-},
+const [showAddModal, setShowAddModal] = useState(false);
+const [openMenu, setOpenMenu] = useState<string | null>(null);
+const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
+const staff = profiles.filter(
+  (profile) =>
+    profile.practiceId === currentUser?.practiceId &&
+    profile.id !== currentUser?.id &&
+    profile.role === "vet"
+);
 
-{
-name:"Daniel Smith",
-email:"daniel@vetscribe.co.uk",
-role:"Practice Manager",
-status:"Active"
-},
-
-
-{
-name:"Sophie Wilson",
-email:"sophie@vetscribe.co.uk",
-role:"Reception",
-status:"Invited"
-}
-
-];
-
-
+const activeStaff = staff.filter(
+  (member) => member.isActive
+).length;
 
 
 
@@ -98,6 +91,8 @@ Manage veterinary team members and access permissions.
 
 <button
 
+onClick={() => setShowAddModal(true)}
+
 className="
 flex
 items-center
@@ -115,7 +110,7 @@ hover:bg-teal-700
 
 <UserPlus size={18}/>
 
-Add Staff Member
+Add Veterinarian
 
 </button>
 
@@ -182,7 +177,7 @@ Total Staff
 
 <p className="text-2xl font-bold">
 
-4
+{staff.length}
 
 </p>
 
@@ -241,7 +236,7 @@ Active Users
 
 <p className="text-2xl font-bold">
 
-3
+{activeStaff}
 
 </p>
 
@@ -301,7 +296,7 @@ Roles
 
 <p className="text-2xl font-bold">
 
-4
+{staff.length}
 
 </p>
 
@@ -455,7 +450,7 @@ px-3
 py-1
 
 ${
-person.status==="Active"
+person.isActive
 
 ?
 
@@ -463,13 +458,13 @@ person.status==="Active"
 
 :
 
-"bg-yellow-50 text-yellow-700"
+"bg-red-50 text-red-700"
 
 }
 
 `}>
 
-{person.status}
+{person.isActive ? "Active" : "Deactivated"}
 
 </span>
 
@@ -480,7 +475,18 @@ person.status==="Active"
 
 
 
+<div>
+
 <button
+
+onClick={(e) => {
+ const rect = e.currentTarget.getBoundingClientRect();
+ setMenuPosition({
+   top: rect.bottom + 8,
+   left: rect.right - 192,
+ });
+ setOpenMenu(openMenu === person.id ? null : person.id);
+}}
 
 className="
 rounded-lg
@@ -493,6 +499,54 @@ hover:bg-slate-100
 <MoreHorizontal size={20}/>
 
 </button>
+
+{openMenu === person.id && (
+  <div
+    className="fixed z-[100] w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+    style={{
+      top: menuPosition.top,
+      left: menuPosition.left,
+    }}
+  >
+
+    <button
+       onClick={() => {
+         navigate(`/dashboard/staff/${person.id}`);
+         setOpenMenu(null);
+       }}
+       className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50"
+     >
+       View Profile
+     </button>
+
+     <button
+       onClick={() => {
+         navigate(`/dashboard/staff/${person.id}/edit`);
+         setOpenMenu(null);
+       }}
+       className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50"
+     >
+       Edit Veterinarian Details
+     </button>
+
+     <button
+       onClick={async () => {
+         await toggleUserStatus(person.id, !person.isActive);
+         setOpenMenu(null);
+       }}
+       className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
+          person.isActive
+            ? "text-red-600 hover:bg-red-50"
+            : "text-green-600 hover:bg-green-50"
+        }`}
+     >
+       {person.isActive ? "Deactivate Account" : "Activate Account"}
+     </button>
+
+  </div>
+)}
+
+</div>
 
 
 
@@ -522,6 +576,88 @@ hover:bg-slate-100
 
 
 
+
+{showAddModal && (
+  <div className="rounded-2xl border border-slate-200 bg-white p-6">
+    <h3 className="text-lg font-semibold">Add Veterinarian</h3>
+
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <input
+        className="rounded-lg border px-3 py-2"
+        placeholder="First name"
+        value={form.firstName}
+        onChange={(e)=>setForm({...form, firstName:e.target.value})}
+      />
+
+      <input
+        className="rounded-lg border px-3 py-2"
+        placeholder="Last name"
+        value={form.lastName}
+        onChange={(e)=>setForm({...form, lastName:e.target.value})}
+      />
+
+      <input
+        className="rounded-lg border px-3 py-2"
+        placeholder="Email"
+        value={form.email}
+        onChange={(e)=>setForm({...form, email:e.target.value})}
+      />
+
+      <input
+        className="rounded-lg border px-3 py-2"
+        placeholder="Temporary password"
+        type="password"
+        value={form.password}
+        onChange={(e)=>setForm({...form, password:e.target.value})}
+      />
+    </div>
+
+    <div className="mt-4 flex gap-3">
+      <button
+        className="rounded-lg bg-teal-600 px-4 py-2 text-white"
+       onClick={async()=>{
+
+try {
+
+await createStaffMember(form);
+
+setShowAddModal(false);
+
+setForm({
+ firstName:"",
+ lastName:"",
+ email:"",
+ password:"",
+});
+
+}
+catch(error){
+
+console.error("CREATE VET ERROR:", error);
+
+alert(
+ error instanceof Error
+ ? error.message
+ : "Failed creating veterinarian"
+);
+
+}
+
+}}
+        
+      >
+        Create Veterinarian
+      </button>
+
+      <button
+        className="rounded-lg border px-4 py-2"
+        onClick={()=>setShowAddModal(false)}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
 
 </div>
 

@@ -18,7 +18,8 @@ const navigate = useNavigate();
 const {
   practice,
   clients,
-  addPatient
+  addPatient,
+  checkSubscriptionLimit
 }=useAppState();
 
 
@@ -125,6 +126,22 @@ return;
 
 
 try{
+
+
+const patientLimit =
+checkSubscriptionLimit("patients");
+
+
+if(!patientLimit.allowed){
+
+showToast(
+  "Patient limit reached for your subscription plan. Please upgrade to add more patients.",
+  "error"
+);
+
+return;
+
+}
 
 
 setLoading(true);

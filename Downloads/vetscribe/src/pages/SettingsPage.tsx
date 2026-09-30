@@ -11,11 +11,109 @@ import {
   UserCog
 } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppState } from "../lib/AppState";
+import { supabase } from "../lib/supabase/client";
 
 
 
 export function SettingsPage(){
+
+const {
+  practice,
+  updatePractice,
+  subscriptions,
+  subscriptionPlans,
+  currentUser,
+  referralCode,
+  referrals,
+  loadReferrals,
+  loadReferralCode
+}=useAppState();
+
+const currentSubscription =
+  subscriptions?.find(
+    (item:any)=>item.practice_id===practice?.id
+  );
+
+const isPracticeManager =
+[
+  "practice_manager",
+  "practice manager",
+  "Practice Manager"
+].includes(
+  currentUser?.role || ""
+);
+
+const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+useEffect(()=>{
+
+  if(loadReferrals){
+    loadReferrals();
+  }
+
+  if(!referralCode && loadReferralCode){
+    loadReferralCode();
+  }
+
+},[loadReferrals,loadReferralCode,referralCode]);
+
+async function startCheckout(planId:string){
+
+  if(!isPracticeManager){
+    alert("Only practice managers can manage subscriptions.");
+    return;
+  }
+
+  try{
+
+    setCheckoutLoading(planId);
+
+    if(!supabase){
+      throw new Error("Supabase is not configured.");
+    }
+
+    const {data,error} =
+      await supabase.functions.invoke(
+        "create-checkout-session",
+        {
+          body:{
+            planId
+          }
+        }
+      );
+
+    if(error){
+      throw error;
+    }
+
+    if(data?.checkoutUrl){
+      window.location.href = data.checkoutUrl;
+      return;
+    }
+
+    throw new Error("Unable to open checkout.");
+
+  }catch(error:any){
+
+    alert(
+      error?.message || "Unable to start checkout."
+    );
+
+  }finally{
+
+    setCheckoutLoading(null);
+
+  }
+
+}
+
+const currentPlan =
+  subscriptionPlans?.find(
+    (plan:any)=>plan.id===currentSubscription?.plan_id
+  );
+
 
 
 
@@ -25,9 +123,9 @@ const [saved,setSaved] = useState(false);
 
 const [settings,setSettings] = useState({
 
-practiceName:"VetScribe Veterinary Clinic",
+practiceName: practice?.name || "",
 
-country:"United Kingdom",
+country: practice?.country || "",
 
 address:"",
 
@@ -81,7 +179,19 @@ setSettings(prev=>({
 
 
 
-function saveSettings(){
+async function saveSettings(){
+
+try{
+
+await updatePractice({
+
+name: settings.practiceName,
+country: settings.country,
+address: settings.address,
+phone: settings.phone,
+email: settings.email
+
+});
 
 setSaved(true);
 
@@ -92,6 +202,14 @@ setSaved(false);
 
 },2000);
 
+
+}catch(error:any){
+
+alert(
+error?.message || "Unable to save settings"
+);
+
+}
 
 }
 
@@ -1683,6 +1801,70 @@ Remove active sessions from other devices.
 
 
 {/* =========================
+REFERRAL PROGRAM
+========================= */}
+
+
+<section className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-5
+sm:p-6
+shadow-sm
+">
+
+<div>
+
+<h2 className="text-lg font-semibold">
+Referral Program
+</h2>
+
+<p className="text-sm text-slate-500 mt-1">
+Invite other veterinary practices to VetScribe.
+</p>
+
+</div>
+
+
+<div className="
+mt-6
+rounded-xl
+bg-slate-50
+p-4
+">
+
+<p className="text-sm text-slate-500">
+Your Referral Code
+</p>
+
+<p className="mt-2 text-2xl font-bold text-teal-600">
+{referralCode || "Generating..."}
+</p>
+
+</div>
+
+
+<div className="mt-4">
+
+<p className="text-sm font-medium">
+Successful Referrals
+</p>
+
+<p className="mt-2 text-3xl font-bold">
+{referrals?.length || 0}
+</p>
+
+</div>
+
+
+</section>
+
+
+
+
+{/* =========================
 SUBSCRIPTION
 ========================= */}
 
@@ -1779,7 +1961,7 @@ text-3xl
 font-bold
 ">
 
-Professional
+{currentPlan?.name || "No Plan"}
 
 </h3>
 
@@ -1829,7 +2011,7 @@ text-3xl
 font-bold
 ">
 
-£99
+{currentPlan?.price ? `${currentPlan.price}` : "-"}
 
 <span className="
 text-base
@@ -1873,6 +2055,58 @@ Next billing date: 01 October 2026
 
 
 
+
+{isPracticeManager && (
+  <div className="mt-6 grid gap-4 md:grid-cols-2">
+    {subscriptionPlans?.map((plan:any)=>(
+      <div
+        key={plan.id}
+        className="rounded-xl bg-white/10 p-5"
+      >
+        <p className="text-lg font-semibold">
+          {plan.name}
+        </p>
+
+        <p className="mt-2 text-2xl font-bold">
+          £{plan.price}
+          <span className="text-sm font-normal text-slate-400">
+            /month
+          </span>
+        </p>
+
+        {plan.id === currentPlan?.id ? (
+          <div className="mt-4 rounded-lg bg-teal-500/20 px-4 py-2 text-sm text-teal-300">
+            Current Plan
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={checkoutLoading === plan.id}
+            onClick={()=>startCheckout(plan.id)}
+            className="
+              mt-4
+              w-full
+              rounded-lg
+              bg-teal-500
+              px-4
+              py-2
+              font-semibold
+              text-white
+              hover:bg-teal-400
+              transition
+              disabled:opacity-60
+            "
+          >
+            {checkoutLoading === plan.id
+              ? "Opening checkout..."
+              : "Upgrade"}
+          </button>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+
 <div className="
 mt-6
 flex
@@ -1883,9 +2117,23 @@ sm:flex-row
 
 
 
+{isPracticeManager ? (
+
 <button
 
 type="button"
+
+onClick={()=>{
+  const nextPlan = subscriptionPlans?.find(
+    (plan:any)=>plan.id !== currentPlan?.id
+  );
+
+  if(nextPlan){
+    startCheckout(nextPlan.id);
+  }
+}}
+
+disabled={!!checkoutLoading}
 
 className="
 rounded-xl
@@ -1895,13 +2143,22 @@ py-3
 font-semibold
 hover:bg-teal-400
 transition
+disabled:opacity-60
 "
 
 >
 
-Manage Subscription
+{checkoutLoading ? "Opening checkout..." : "Manage Subscription"}
 
 </button>
+
+) : (
+
+<div className="rounded-xl bg-white/10 px-5 py-3 text-sm text-slate-300">
+Subscription changes are managed by your Practice Manager.
+</div>
+
+)}
 
 
 

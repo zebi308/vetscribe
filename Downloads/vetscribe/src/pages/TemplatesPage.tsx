@@ -7,50 +7,16 @@ import {
   MoreHorizontal
 } from "lucide-react";
 
+import { useState } from "react";
+import { useAppState } from "../lib/AppState";
+
 
 
 export function TemplatesPage(){
 
 
 
-const templates = [
 
-{
-name:"Standard SOAP Note",
-type:"Clinical Note",
-description:
-"Structured Subjective, Objective, Assessment and Plan consultation format.",
-status:"Active"
-},
-
-
-{
-name:"Vaccination Consultation",
-type:"Clinical Note",
-description:
-"Template for routine vaccination appointments and follow-up notes.",
-status:"Active"
-},
-
-
-{
-name:"Surgery Follow-up",
-type:"Clinical Note",
-description:
-"Post-operative monitoring and recovery documentation.",
-status:"Draft"
-},
-
-
-{
-name:"Owner Discharge Summary",
-type:"Owner Communication",
-description:
-"Simple explanation of treatment and aftercare instructions.",
-status:"Active"
-}
-
-];
 
 
 
@@ -105,6 +71,8 @@ Create and manage AI documentation templates.
 
 <button
 
+onClick={()=>setShowForm(true)}
+
 className="
 flex
 items-center
@@ -136,6 +104,17 @@ New Template
 
 
 
+
+{showForm && (
+<div className="rounded-2xl border bg-white p-6 space-y-4">
+<h2 className="text-xl font-semibold">{editingId ? "Edit Template" : "New Template"}</h2>
+<input className="w-full rounded-lg border p-3" placeholder="Template name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+<input className="w-full rounded-lg border p-3" placeholder="Type" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}/>
+<input className="w-full rounded-lg border p-3" placeholder="Category" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
+<textarea className="w-full rounded-lg border p-3" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
+<div className="flex gap-3"><button onClick={saveTemplate} className="rounded-lg bg-teal-600 px-5 py-2 text-white">Save</button><button onClick={()=>setShowForm(false)} className="rounded-lg border px-5 py-2">Cancel</button></div>
+</div>
+)}
 
 {/* TEMPLATE STATS */}
 
@@ -185,11 +164,7 @@ Total Templates
 </p>
 
 
-<p className="text-2xl font-bold">
-
-4
-
-</p>
+<p className="text-2xl font-bold">{templates.length}</p>
 
 
 </div>
@@ -242,11 +217,7 @@ Active
 </p>
 
 
-<p className="text-2xl font-bold">
-
-3
-
-</p>
+<p className="text-2xl font-bold">{templates.filter((t:any)=>t.status==="Active").length}</p>
 
 
 </div>
@@ -299,11 +270,7 @@ Categories
 </p>
 
 
-<p className="text-2xl font-bold">
-
-2
-
-</p>
+<p className="text-2xl font-bold">{new Set(templates.map((t:any)=>t.category)).size}</p>
 
 
 </div>
@@ -503,7 +470,7 @@ template.status==="Active"
 
 
 <button
-
+onClick={()=>editTemplate(template)}
 className="
 flex
 items-center
@@ -512,7 +479,6 @@ text-sm
 font-semibold
 text-teal-600
 "
-
 >
 
 <Edit3 size={15}/>

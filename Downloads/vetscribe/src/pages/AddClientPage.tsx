@@ -18,7 +18,8 @@ const navigate = useNavigate();
 
 const {
   practice,
-  addClient
+  addClient,
+  checkSubscriptionLimit
 }=useAppState();
 
 
@@ -93,6 +94,19 @@ return;
 
 
 try{
+
+const clientLimit = checkSubscriptionLimit("clients");
+
+if(!clientLimit.allowed){
+
+  showToast(
+    "Client limit reached for your subscription plan. Please upgrade to add more clients.",
+    "error"
+  );
+
+  return;
+
+}
 
 
 setLoading(true);

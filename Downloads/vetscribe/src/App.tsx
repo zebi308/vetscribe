@@ -39,6 +39,7 @@ import { MedicationsPage } from "./pages/MedicationsPage";
 import { AddClientPage } from "./pages/AddClientPage";
 import { AddPatientPage } from "./pages/AddPatientPage";
 import { EditClientPage } from "./pages/EditClientPage";
+import { EditVeterinarianPage } from "./pages/EditVeterinarianPage";
 import { NewConsultationPage } from "./pages/NewConsultationPage";
 import { ConsultationRoomPage } from "./pages/ConsultationRoomPage";
 import { PatientProfilePage } from "./pages/PatientProfilePage";
@@ -50,7 +51,7 @@ import { OwnerSummaryPage } from "./pages/OwnerSummaryPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { PracticeSettingsPage } from "./pages/PracticeSettingsPage";
 import { StaffPage } from "./pages/StaffPage";
-import { TemplatesPage } from "./pages/TemplatesPage";
+import { StaffProfilePage } from "./pages/StaffProfilePage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { AuditPage } from "./pages/AuditPage";
 
@@ -213,24 +214,40 @@ element={<ConsultationsPage/>}
 />
 
 
+<Route
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "vet",
+        "super_admin"
+      ]}
+    />
+  }
+>
+  <Route
+    path="consultations/new"
+    element={<NewConsultationPage/>}
+  />
+</Route>
+
+
 
 <Route
-
-path="consultations/new"
-
-element={<NewConsultationPage/>}
-
-/>
-
-
-
-<Route
-
-path="consultations/:id"
-
-element={<ConsultationRoomPage/>}
-
-/>
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "vet",
+        "practice_manager",
+        "super_admin"
+      ]}
+    />
+  }
+>
+  <Route
+    path="consultations/:id"
+    element={<ConsultationRoomPage/>}
+  />
+</Route>
 
 
 <Route
@@ -439,6 +456,22 @@ element={<StaffPage/>}
 
 />
 
+<Route
+
+path="staff/:id"
+
+element={<StaffProfilePage/>}
+
+/>
+
+<Route
+
+path="staff/:id/edit"
+
+element={<EditVeterinarianPage/>}
+
+/>
+
 
 </Route>
 
@@ -466,16 +499,7 @@ allowedRoles={[
 >
 
 
-<Route
 
-path="settings/templates"
-
-element={<TemplatesPage/>}
-
-/>
-
-
-</Route>
 
 
 
@@ -659,23 +683,14 @@ element={<AdminPage/>}
 
 </Route>
 
-
-
-
+</Route>
 
 </Route>
 
-
 </Route>
-
-
-
-
-
 
 
 </Routes>
-
 
 </BrowserRouter>
 

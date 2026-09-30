@@ -9,6 +9,12 @@ import {
 import { supabase } from "./supabase/client";
 
 import {
+ getCurrentSubscription as getSubscriptionService,
+ checkSubscriptionStatus as checkSubscriptionService,
+ checkSubscriptionLimit as checkSubscriptionLimitService,
+ requireActiveSubscription,
+} from "./services/subscriptionService";
+import {
   loadMembership,
   loadPracticeData,
   loadAuditLogs,
@@ -26,6 +32,7 @@ import {
   recordPayment,
   createAnalyticsEvent,
   calculateBusinessMetrics,
+  loadAIUsage,
 } from "./supabase/repository";
 
 import type {
@@ -58,6 +65,7 @@ interface AppStateContextType {
   invoices: any[];
   payments: any[];
   platformMetrics: any[];
+  aiUsage: any[];
 
   profiles: Profile[];
 
@@ -80,6 +88,7 @@ interface AppStateContextType {
 
   login(email: string, password: string): Promise<boolean>;
   register(data: any): Promise<void>;
+  createStaffMember(data: any): Promise<void>;
   logout(): Promise<void>;
   refreshData(): Promise<void>;
 
@@ -87,6 +96,25 @@ interface AppStateContextType {
   generateInvoice(payload:any): Promise<any>;
   recordBusinessPayment(payload:any): Promise<any>;
   getBusinessMetrics(): Promise<any>;
+  checkSubscriptionLimit(type: string): {
+    allowed: boolean;
+    current: number;
+    limit: number | string;
+    message?: string;
+  };
+  checkSubscriptionStatus(): {
+    active: boolean;
+    status: string;
+    message?: string;
+  };
+
+  referralCode: string;
+  referrals: any[];
+  generateReferralCode(): Promise<string>;
+  validateReferralCode(code:string): Promise<any>;
+  createReferral(payload:any): Promise<any>;
+  loadReferrals(): Promise<any[]>;
+  loadReferralCode(): Promise<string>;
 
   createConsultation(patientId: string): Promise<string>;
   updateConsultation(
@@ -139,6 +167,7 @@ interface AppStateContextType {
   ): Promise<void>;
 
   changePracticeStatus(id:string,status:string): Promise<void>;
+  updatePractice(data:any): Promise<void>;
 
   addFollowUp(followUp: FollowUp): Promise<void>;
 
@@ -197,6 +226,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
 
   // Phase 13 Business Layer
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
@@ -206,10 +236,75 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [platformAnalytics, setPlatformAnalytics] = useState<any | null>(null);
   const [analyticsEvents, setAnalyticsEvents] = useState<any[]>([]);
   const [platformMetrics, setPlatformMetrics] = useState<any[]>([]);
+  const [aiUsage, setAIUsage] = useState<any[]>([]);
+
+  // Referral system state (Stage 1)
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [referralCode, setReferralCode] = useState<string>("");
 
   useEffect(() => {
     restoreSession();
   }, []);
+
+  // Keep subscriptions synced after Stripe webhook creates/updates rows
+  useEffect(() => {
+
+    if(!supabase || !practice?.id) return;
+
+    const channel = supabase
+      .channel("subscription-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "subscriptions",
+          filter: `practice_id=eq.${practice.id}`
+        },
+        async () => {
+          try {
+            const updatedSubscriptions = await loadSubscriptions();
+
+            const normalizedSubscriptions = (updatedSubscriptions || []).map((item:any)=>({
+              ...item,
+              practice_id: item.practice_id || item.practiceId || item.practice?.id,
+              plan_id: item.plan_id || item.planId || item.plan?.id,
+              status: item.status?.toLowerCase()?.trim() || "inactive"
+            }));
+
+            setSubscriptions(normalizedSubscriptions);
+
+          } catch(error){
+            console.error(
+              "SUBSCRIPTION REALTIME REFRESH ERROR:",
+              error
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+
+  }, [practice?.id]);
+
+  // Load referral code only after practice state is ready
+  useEffect(() => {
+
+    if (!practice?.id) return;
+
+    loadReferralCode()
+      .catch((error) => {
+        console.error(
+          "REFERRAL CODE LOAD ERROR:",
+          error
+        );
+      });
+
+  }, [practice?.id]);
+
 
   async function restoreSession() {
 
@@ -239,56 +334,312 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   }
 
-  async function loadUser(userId: string) {
+  async function loadUser(userId: string): Promise<boolean> {
     const membership = await loadMembership(userId);
+
+    // Block disabled staff accounts from entering the system
+    if (membership.profile && membership.profile.isActive === false) {
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+
+      setCurrentUser(null);
+      setPractice(null);
+      setProfiles([]);
+
+      throw new Error("Your account has been deactivated. Please contact your practice administrator.");
+    }
 
     setCurrentUser(membership.profile);
     setPractice(membership.practice);
 
     await loadAppData();
+
+    return true;
   }
 
-  async function loadAppData() {
+
+async function loadAppData() {
+
+ console.log("NEW APPSTATE VERSION LOADED");
+
+  try {
+
+    console.log("LOADING PRACTICE DATA");
+
+    const data = await loadPracticeData();
+
+    setClients(data.clients || []);
+    setPatients(data.patients || []);
+    setConsultations(data.consultations || []);
+    setMedicines(data.medicines || []);
+    setOwnerSummaries(data.ownerSummaries || []);
+    setVersions(data.versions || []);
+
+
+    const logs = await loadAuditLogs();
+
+    setAuditLogs(logs || []);
+
+
+
+    const allProfiles = await loadProfiles();
+
+    setProfiles(allProfiles || []);
+
+
+
+    const allPractices = await loadPractices();
+
+    setPractices(allPractices || []);
+
+
+
+    // =====================================
+    // PHASE 13 BUSINESS DATA
+    // Separate error handling
+    // =====================================
+
+
     try {
-      const data = await loadPracticeData();
 
-      setClients(data.clients);
-      setPatients(data.patients);
-      setConsultations(data.consultations);
-      setMedicines(data.medicines);
-      setOwnerSummaries(data.ownerSummaries);
-      setVersions(data.versions);
+      const plans = await loadSubscriptionPlans();
 
-      const logs = await loadAuditLogs();
-      setAuditLogs(logs);
+      console.log(
+        "PLANS FROM SUPABASE:",
+        plans
+      );
 
-      const allProfiles = await loadProfiles();
-      setProfiles(allProfiles);
+      setSubscriptionPlans(
+        plans || []
+      );
 
-      const allPractices = await loadPractices();
-      setPractices(allPractices);
-    } catch (error) {
-      console.error("DATA LOAD ERROR", error);
     }
+    catch(error){
+
+      console.error(
+        "SUBSCRIPTION PLANS LOAD ERROR:",
+        error
+      );
+
+      setSubscriptionPlans([]);
+
+    }
+
+
+
+    try {
+
+      const activeSubscriptions = await loadSubscriptions();
+
+      console.log(
+        "SUBSCRIPTIONS FROM SUPABASE:",
+        activeSubscriptions
+      );
+
+      const normalizedSubscriptions = (activeSubscriptions || []).map((item:any)=>({
+        ...item,
+        practice_id: item.practice_id || item.practiceId || item.practice?.id,
+        plan_id: item.plan_id || item.planId || item.plan?.id,
+        status: item.status?.toLowerCase()?.trim() || "inactive"
+      }));
+
+      console.log("NORMALIZED SUBSCRIPTIONS:", normalizedSubscriptions);
+
+      setSubscriptions(normalizedSubscriptions);
+
+    }
+    catch(error){
+
+      console.error(
+        "SUBSCRIPTIONS LOAD ERROR:",
+        error
+      );
+
+      setSubscriptions([]);
+
+    }
+
+
+    // Referral code is loaded separately after practice state is available
+    // because setPractice() is asynchronous and practice.id may not exist here yet
+
+
+
+
+    try {
+
+      const invoiceData = await loadInvoices();
+
+      console.log(
+        "INVOICES FROM SUPABASE:",
+        invoiceData
+      );
+
+
+      setInvoices(
+        invoiceData || []
+      );
+
+
+    }
+    catch(error){
+
+      console.error(
+        "INVOICES LOAD ERROR:",
+        error
+      );
+
+
+      setInvoices([]);
+
+    }
+
+
+
+
+    try {
+
+      const paymentData = await loadPayments();
+
+      console.log(
+        "PAYMENTS FROM SUPABASE:",
+        paymentData
+      );
+
+
+      setPayments(
+        paymentData || []
+      );
+
+
+    }
+    catch(error){
+
+      console.error(
+        "PAYMENTS LOAD ERROR:",
+        error
+      );
+
+
+      setPayments([]);
+
+    }
+
+
+
+
+
+    try {
+
+      const usageData = await loadAIUsage();
+
+      setAIUsage(usageData || []);
+
+    }
+    catch(error){
+
+      console.error("AI USAGE LOAD ERROR:", error);
+
+      setAIUsage([]);
+
+    }
+
+
+    console.log(
+      "ALL APP DATA LOADED"
+    );
+
+
   }
+  catch(error){
+
+    console.error(
+      "MAIN DATA LOAD ERROR:",
+      error
+    );
+
+  }
+
+}
+
+  // Stripe return handler
+  // Webhook may finish a few seconds after redirect, so refresh the whole
+  // subscription state and remove the success flag from the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("success") === "true" && practice?.id) {
+
+      window.history.replaceState(
+  null,
+  "",
+  window.location.pathname
+      );
+
+      let attempts = 0;
+
+      const refreshSubscription = async () => {
+        try {
+
+          const updatedSubscriptions = await loadSubscriptions();
+
+          console.log(
+            "STRIPE RETURN SUBSCRIPTIONS REFRESH:",
+            updatedSubscriptions
+          );
+
+          const normalizedSubscriptions = (updatedSubscriptions || []).map((item:any)=>({
+            ...item,
+            practice_id: item.practice_id || item.practiceId || item.practice?.id,
+            plan_id: item.plan_id || item.planId || item.plan?.id,
+            status: item.status?.toLowerCase()?.trim() || "inactive"
+          }));
+
+          setSubscriptions(normalizedSubscriptions);
+
+        } catch(error) {
+
+          console.error(
+            "SUCCESS SUBSCRIPTION REFRESH ERROR:",
+            error
+          );
+
+        }
+
+        attempts++;
+
+        if (attempts < 8) {
+          setTimeout(refreshSubscription, 3000);
+        }
+      };
+
+      refreshSubscription();
+    }
+
+  }, [practice?.id]);
+
+
 
 
   async function createAuditLog(
     action: string,
     type: string,
-    status: string = "Completed"
+    entityId: string = "",
+    metadata: any = {}
   ) {
 
-    const log: AuditLog = {
+    const log: any = {
       id: crypto.randomUUID(),
       practiceId: practice?.id || "",
       action,
       actorUserId: currentUser?.id || "",
       entityType: type,
-      entityId: currentUser?.id || "",
+      entityId,
       description: action,
+      metadata,
       createdAt: new Date().toISOString()
-    } as AuditLog;
+    };
 
 
     setAuditLogs((prev) => [
@@ -300,7 +651,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
 
 
-    await supabase
+    const { error } = await supabase
       .from("audit_logs")
       .insert({
         id: log.id,
@@ -309,12 +660,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         entity_type: log.entityType,
         entity_id: log.entityId,
         description: log.description,
+        metadata: log.metadata,
         actor_user_id: log.actorUserId,
         created_at: log.createdAt
       });
 
-  }
 
+    if (error) {
+      console.error(
+        "AUDIT INSERT ERROR DETAILS:",
+        JSON.stringify(error, null, 2)
+      );
+    }
+
+  }
 
   async function login(email: string, password: string): Promise<boolean> {
 
@@ -335,13 +694,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    if (data.user) {
-      await loadUser(data.user.id);
+    try {
+      if (data.user) {
+        await loadUser(data.user.id);
+      }
+
+      setAuthLoading(false);
+      return true;
+
+    } catch (error: any) {
+      console.error("ACCOUNT ACCESS BLOCKED", error);
+      setAuthLoading(false);
+
+      // Pass the real reason back to LoginPage
+      // so deactivated users see the correct message
+      throw error;
     }
-
-    setAuthLoading(false);
-
-    return true;
   }
 
   async function register(form: any): Promise<void> {
@@ -353,8 +721,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
 
     if (userError) throw userError;
-
     if (!userData.user) throw new Error("No auth user returned");
+
+    // Make sure the signup JWT is active before creating the practice row.
+    // This prevents RLS from seeing the insert as an anonymous request.
 
     let {
       data: { session },
@@ -366,32 +736,90 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         password: form.password,
       });
 
+      if (retry.error) throw retry.error;
+
       session = retry.data.session;
     }
 
-    if (!session) throw new Error("No active session");
+    if (!session) {
+      throw new Error("No active session after signup");
+    }
 
-    const slug =
-      form.practiceName.toLowerCase().trim().replace(/\s+/g, "-") +
-      "-" +
-      Date.now();
+    const refreshedSession = await supabase.auth.refreshSession();
 
-    const { data: practiceData, error: practiceError } = await supabase
-      .from("practices")
-      .insert({
-        name: form.practiceName,
-        slug,
-        subdomain: slug,
-        address_line_1: "",
-        city: "",
-        postcode: "",
-        phone: "",
-        email: form.email,
-      })
-      .select()
-      .single();
+    if (refreshedSession.error) {
+      throw refreshedSession.error;
+    }
 
-    if (practiceError) throw practiceError;
+    session = refreshedSession.data.session;
+
+    if (!session) {
+      throw new Error("Session refresh failed");
+    }
+
+    const { data: confirmedUserData, error: confirmedUserError } =
+      await supabase.auth.getUser(session.access_token);
+
+    console.log(
+      "USER BEFORE PRACTICE INSERT:",
+      confirmedUserData?.user
+    );
+
+    if (confirmedUserError || !confirmedUserData?.user) {
+      throw new Error(
+        "Authentication not ready before practice creation"
+      );
+    }
+
+    await supabase.realtime.setAuth(session.access_token);
+
+const slug =
+  form.practiceName.toLowerCase().trim().replace(/\s+/g, "-") +
+  "-" +
+  Date.now();
+
+
+    // Validate referral before creating the new practice
+    // Keep one normalized referral code value through the complete signup flow
+    const submittedReferralCode =
+      form.referralCode ||
+      form.referral_code ||
+      "";
+
+    let referralOwner: any = null;
+
+    if (submittedReferralCode.trim()) {
+      referralOwner = await validateReferralCode(
+        submittedReferralCode.trim()
+      );
+
+      if (!referralOwner) {
+        throw new Error("Invalid referral code");
+      }
+    }
+console.log(
+  "CURRENT SESSION BEFORE PRACTICE INSERT:",
+  await supabase.auth.getSession()
+);
+    const practiceId = crypto.randomUUID();
+
+const { error: practiceError } = await supabase
+  .from("practices")
+  .insert({
+    id: practiceId,
+    name: form.practiceName,
+    slug,
+    subdomain: slug,
+    address_line_1: "",
+    city: "",
+    postcode: "",
+    phone: "",
+    email: form.email,
+  });
+
+if (practiceError) throw practiceError;
+
+const practiceData = { id: practiceId };
 
     const { error: profileError } = await supabase.from("profiles").insert({
       auth_user_id: userData.user.id,
@@ -399,14 +827,160 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       first_name: form.firstName,
       last_name: form.lastName,
       email: form.email,
-      role: form.role,
+      role: "practice_manager",
       is_active: true,
     });
 
     if (profileError) throw profileError;
 
+
+    // =====================================================
+    // CREATE DEFAULT STARTER SUBSCRIPTION + TRIAL
+    // Referral users receive additional 30 days later
+    // =====================================================
+
+    const trialDays = 14 + (referralOwner ? 30 : 0);
+
+    const trialStart = new Date();
+
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + trialDays);
+
+    const { data: starterPlan } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("name", "Starter")
+      .single();
+
+
+    if (starterPlan?.id) {
+
+      try {
+        const createdSubscription = await createSubscription({
+          practice_id: practiceData.id,
+          plan_id: starterPlan.id,
+          status: "trialing",
+          start_date: trialStart.toISOString(),
+          trial_start: trialStart.toISOString(),
+          trial_end: trialEnd.toISOString(),
+trial_days: 14,
+referral_bonus_days: referralOwner ? 30 : 0,
+voucher_code: referralOwner ? submittedReferralCode.trim() : null,
+        });
+
+        console.log(
+          "INITIAL SUBSCRIPTION CREATED:",
+          createdSubscription
+        );
+
+      } catch (subscriptionError) {
+        console.error(
+          "INITIAL SUBSCRIPTION CREATION ERROR:",
+          subscriptionError
+        );
+
+        throw subscriptionError;
+      }
+    }
+
+
+    // =====================================================
+    // SAVE REFERRAL RELATIONSHIP
+    // =====================================================
+
+    if (referralOwner) {
+
+  const referralCodeUsed =
+    submittedReferralCode ||
+    referralOwner.referral_code;
+
+
+  if (!referralCodeUsed) {
+    throw new Error("Referral code missing while creating referral record");
+  }
+
+
+  const { error: referralError } = await supabase
+    .from("referrals")
+    .insert({
+      referrer_practice_id: referralOwner.id,
+      referred_practice_id: practiceData.id,
+      referral_code: referralCodeUsed.trim(),
+      status: "completed",
+    });
+
+
+  if (referralError) {
+    console.error(
+      "REFERRAL CREATION ERROR:",
+      referralError
+    );
+
+    throw referralError;
+  }
+}
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await loadUser(userData.user.id);
   }
+
+
+  async function createStaffMember(data: any): Promise<void> {
+    if (!supabase) throw new Error("Supabase not configured");
+
+    if (!practice || !currentUser) {
+      throw new Error("Practice not loaded");
+    }
+
+    ensureActiveSubscription();
+
+    const userLimit = checkSubscriptionLimit("users");
+
+    if (!userLimit.allowed) {
+      throw new Error(userLimit.message || "Veterinarian limit reached. Please upgrade your subscription.");
+    }
+
+    const { data: userData, error: userError } =
+      await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+    if (userError) throw userError;
+
+    if (!userData.user) {
+      throw new Error("No auth user returned");
+    }
+
+    const { error: profileError } =
+      await supabase
+        .from("profiles")
+        .insert({
+          auth_user_id: userData.user.id,
+          practice_id: practice.id,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          role: "vet",
+          is_active: true,
+        });
+
+    if (profileError) throw profileError;
+
+    await loadAppData();
+
+    await createAuditLog(
+      "Veterinarian staff member created",
+      "STAFF",
+      userData.user.id,
+      {
+        staffName: `${data.firstName} ${data.lastName}`,
+        role: "Veterinarian",
+        email: data.email
+      }
+    );
+  }
+
 
   async function logout() {
     if (supabase) {
@@ -428,6 +1002,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   async function createConsultation(patientId: string): Promise<string> {
     if (!practice || !currentUser) throw new Error("User not loaded");
+
+    ensureActiveSubscription();
 
     const patient = patients.find((p) => p.id === patientId);
 
@@ -459,6 +1035,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
     setConsultations((prev) => [savedConsultation, ...prev]);
 
+    await createAuditLog(
+      `Consultation created for patient ${patient.name}`,
+      "CREATE"
+    );
+
     return savedConsultation.id;
   }
 
@@ -480,6 +1061,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       .from("consultations")
       .update({ ...changes, updated_at: new Date().toISOString() })
       .eq("id", id);
+
+    await createAuditLog(
+      `Consultation updated: ${id}`,
+      "UPDATE"
+    );
   }
 
   async function saveDraft(id: string, draft: ClinicalDraft, clinicalQuality?: any) {
@@ -1141,6 +1727,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
 
   async function addClient(client: Client) {
+
+    ensureActiveSubscription();
+
+    const clientLimit = checkSubscriptionLimit("clients");
+
+    if (!clientLimit.allowed) {
+      throw new Error(clientLimit.message || "Client limit reached. Please upgrade your subscription.");
+    }
+
     setClients((prev) => [client, ...prev]);
 
     if (!supabase) return;
@@ -1157,6 +1752,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       phone: client.phone,
       email: client.email,
     });
+
+    await createAuditLog(
+      `Client created: ${client.firstName} ${client.lastName}`,
+      "CREATE"
+    );
   }
 
   async function updateClient(
@@ -1313,6 +1913,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
 
   async function addPatient(patient: Patient) {
+
+    ensureActiveSubscription();
+
+    const patientLimit = checkSubscriptionLimit("patients");
+
+    if (!patientLimit.allowed) {
+      throw new Error(patientLimit.message || "Patient limit reached. Please upgrade your subscription.");
+    }
+
     setPatients((prev) => [patient, ...prev]);
 
     if (!supabase) return;
@@ -1331,6 +1940,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       colour: patient.colour,
       weight_kg: patient.weightKg,
     });
+
+    await createAuditLog(
+      `Patient created: ${patient.name}`,
+      "CREATE"
+    );
   }
 
   async function updatePatient(
@@ -1494,11 +2108,374 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       "UPDATE"
     );
   }
+async function updatePractice(data:any): Promise<void>{
 
+  if(!practice) {
+    throw new Error("Practice not loaded");
+  }
+
+
+  if(!supabase){
+    throw new Error("Supabase not configured");
+  }
+
+
+  const updateData:any = {};
+
+
+  if(data.name !== undefined)
+    updateData.name = data.name;
+
+
+  if(data.email !== undefined)
+    updateData.email = data.email;
+
+
+  if(data.phone !== undefined)
+    updateData.phone = data.phone;
+
+
+  if(data.address_line_1 !== undefined)
+    updateData.address_line_1 = data.address_line_1;
+
+
+  if(data.city !== undefined)
+    updateData.city = data.city;
+
+
+  if(data.postcode !== undefined)
+    updateData.postcode = data.postcode;
+
+
+  if(data.logo_url !== undefined)
+    updateData.logo_url = data.logo_url;
+
+
+
+  const {error} = await supabase
+    .from("practices")
+    .update(updateData)
+    .eq("id", practice.id);
+
+
+
+  if(error){
+    throw error;
+  }
+
+
+
+  setPractice({
+    ...practice,
+    ...data
+  });
+
+
+
+  await createAuditLog(
+    "Practice profile updated",
+    "UPDATE",
+    practice.id,
+    {
+      changes:data
+    }
+  );
+
+}
+
+
+  // ================================
+  // REFERRAL SYSTEM - STAGE 1
+  // ================================
+
+  async function generateReferralCode(): Promise<string> {
+
+    if (!practice?.id) {
+      throw new Error("Practice not loaded");
+    }
+
+    // Prevent generating a new code every time.
+    // Existing clinics should always keep the same referral code.
+    if (practice.referral_code) {
+      setReferralCode(practice.referral_code);
+      return practice.referral_code;
+    }
+
+    const base =
+      (practice.name || "VETSCRIBE")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .substring(0,8)
+      .toUpperCase();
+
+    const code =
+      `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (supabase) {
+      const { error } = await supabase
+        .from("practices")
+        .update({
+          referral_code: code
+        })
+        .eq("id", practice.id);
+
+      if (error) throw error;
+    }
+
+    setReferralCode(code);
+
+    setPractice((prev:any)=>(
+      prev
+      ? {
+          ...prev,
+          referral_code: code
+        }
+      : prev
+    ));
+
+    return code;
+  }
+
+
+  async function loadReferralCode(): Promise<string> {
+
+    if (!supabase || !practice?.id) {
+      return "";
+    }
+
+    const { data, error } = await supabase
+      .from("practices")
+      .select("referral_code")
+      .eq("id", practice.id)
+      .single();
+
+    if (error) {
+      console.error("REFERRAL CODE LOAD ERROR:", error);
+      return "";
+    }
+
+    let code = data?.referral_code || "";
+
+    // Auto-create referral code for older/new clinics that do not have one yet.
+    if (!code) {
+      code = await generateReferralCode();
+      return code;
+    }
+
+    setReferralCode(code);
+
+    setPractice((prev:any) =>
+      prev
+        ? {
+            ...prev,
+            referral_code: code
+          }
+        : prev
+    );
+
+    return code;
+  }
+
+
+  async function validateReferralCode(code:string): Promise<any> {
+
+    if (!supabase) {
+      throw new Error("Supabase not configured");
+    }
+
+    const { data, error } = await supabase
+      .from("practices")
+      .select("id,name,referral_code")
+      .eq("referral_code", code.trim())
+      .single();
+
+    if (error) {
+      return null;
+    }
+
+    return data;
+  }
+
+
+  async function createReferral(payload:any): Promise<any> {
+
+    if (!supabase) {
+      throw new Error("Supabase not configured");
+    }
+
+    const { data, error } = await supabase
+      .from("referrals")
+      .insert({
+        referrer_practice_id: payload.referrer_practice_id,
+        referred_practice_id: payload.referred_practice_id,
+        referral_code: payload.referral_code,
+        status: "pending"
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    setReferrals((prev)=>[
+      data,
+      ...prev
+    ]);
+
+    return data;
+  }
+
+
+  async function loadReferrals(): Promise<any[]> {
+
+    if (!supabase || !practice?.id) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("referrals")
+      .select("*")
+      .eq("referrer_practice_id", practice.id);
+
+    if (error) throw error;
+
+    setReferrals(data || []);
+
+    return data || [];
+  }
 
   // ================================
   // PHASE 13 BUSINESS WORKFLOWS
   // ================================
+
+  function ensureActiveSubscription(){
+
+    return requireActiveSubscription(
+      checkSubscriptionStatus()
+    );
+
+  }
+
+
+  function getCurrentSubscription(){
+
+    return getSubscriptionService(
+      subscriptions,
+      practice?.id
+    );
+
+  }
+
+
+  function checkSubscriptionStatus(){
+
+    return checkSubscriptionService(
+      subscriptions,
+      practice?.id
+    );
+
+  }
+
+
+  function checkSubscriptionLimit(type: string){
+
+    const currentSubscription = getCurrentSubscription();
+
+    const currentPlan =
+      subscriptionPlans.find(
+        (item:any) =>
+          item.id === currentSubscription?.plan_id
+      );
+
+
+    if(type === "users"){
+
+      const currentUsers =
+        profiles.filter(
+          (profile:any) =>
+            (profile.practiceId === practice?.id ||
+             profile.practice_id === practice?.id) &&
+            profile.role === "vet"
+        ).length;
+
+
+      return checkSubscriptionLimitService(
+        currentSubscription,
+        currentPlan,
+        type,
+        currentUsers
+      );
+
+    }
+
+
+    if(type === "clients"){
+
+      const currentClients =
+        clients.filter(
+          (client:any) =>
+            client.practiceId === practice?.id ||
+            client.practice_id === practice?.id
+        ).length;
+
+
+      return checkSubscriptionLimitService(
+        currentSubscription,
+        currentPlan,
+        type,
+        currentClients
+      );
+
+    }
+
+
+    if(type === "patients"){
+
+      const currentPatients =
+        patients.filter(
+          (patient:any) =>
+            patient.practiceId === practice?.id ||
+            patient.practice_id === practice?.id
+        ).length;
+
+
+      return checkSubscriptionLimitService(
+        currentSubscription,
+        currentPlan,
+        type,
+        currentPatients
+      );
+
+    }
+
+
+    if(type === "ai"){
+
+      const currentUsage =
+        aiUsage.filter(
+          (item:any)=>
+            item.practice_id === practice?.id
+        ).length;
+
+
+      return checkSubscriptionLimitService(
+        currentSubscription,
+        currentPlan,
+        type,
+        currentUsage
+      );
+
+    }
+
+
+    return {
+      allowed:false,
+      current:0,
+      limit:0,
+      message:"Unknown subscription limit type."
+    };
+
+  }
+
+
 
   async function assignSubscription(payload:any){
 
@@ -1600,6 +2577,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
         login,
         register,
+        createStaffMember,
         logout,
 
         refreshData: loadAppData,
@@ -1632,11 +2610,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         updateUserRole,
         toggleUserStatus,
         changePracticeStatus,
+        updatePractice,
 
         assignSubscription,
         generateInvoice,
         recordBusinessPayment,
         getBusinessMetrics,
+        checkSubscriptionLimit,
+        checkSubscriptionStatus,
+
+        referralCode,
+        referrals,
+        generateReferralCode,
+        validateReferralCode,
+        createReferral,
+        loadReferrals,
+        loadReferralCode,
 
         addFollowUp,
         updateFollowUp,

@@ -60,7 +60,8 @@ export function ConsultationRoomPage(){
     approveConsultation,
     addMedicine,
     addOwnerSummary,
-    addFollowUp
+    addFollowUp,
+    checkSubscriptionLimit
   } = useAppState();
 
   const consultationData = consultations.find(item => item.id === id);
@@ -480,6 +481,20 @@ export function ConsultationRoomPage(){
     }
 
     try{
+
+      const aiLimit =
+        checkSubscriptionLimit("ai");
+
+      if(!aiLimit.allowed){
+
+        showToast(
+          "AI usage limit reached for your subscription plan. Please upgrade to continue.",
+          "error"
+        );
+
+        return;
+
+      }
 
       setLoading(true);
 

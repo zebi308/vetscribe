@@ -21,11 +21,20 @@ export function ConsultationsPage() {
     clients,
     archiveConsultation,
     restoreConsultation,
+    currentUser,
   } = useAppState();
 
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+
+  const canCreateConsultation =
+    currentUser?.role === "vet" ||
+    currentUser?.role === "super_admin";
+
+  const canManageConsultation =
+    currentUser?.role === "vet" ||
+    currentUser?.role === "super_admin";
 
   const consultationList = consultations.map((item) => {
     const patient = patients.find((p) => p.id === item.patientId);
@@ -90,14 +99,16 @@ export function ConsultationsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard/consultations/new")}
-          className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 font-semibold text-white transition hover:bg-teal-700"
-        >
-          <Plus size={18} />
-          New Consultation
-        </button>
+        {canCreateConsultation && (
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/consultations/new")}
+            className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 font-semibold text-white transition hover:bg-teal-700"
+          >
+            <Plus size={18} />
+            New Consultation
+          </button>
+        )}
       </div>
 
       {/* =========================
@@ -281,16 +292,18 @@ export function ConsultationsPage() {
                               Open Consultation
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuOpen(null);
-                                navigate(`/dashboard/consultations/${item.id}`);
-                              }}
-                              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
-                            >
-                              Edit Draft
-                            </button>
+                            {canManageConsultation && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuOpen(null);
+                                  navigate(`/dashboard/consultations/${item.id}`);
+                                }}
+                                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                              >
+                                Edit Draft
+                              </button>
+                            )}
 
                             {item.status === "draft" && (
                               <button

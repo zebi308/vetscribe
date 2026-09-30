@@ -17,71 +17,31 @@ import {
 
 export function AuditPage(){
 
-const { auditLogs: appAuditLogs } = useAppState();
+const { auditLogs: appAuditLogs, currentUser, practice } = useAppState();
 
 const [search, setSearch] = useState("");
 
-const logs = [
+const auditLogs = appAuditLogs || [];
 
-{
-action:"Consultation note approved",
-user:"Dr. James Anderson",
-type:"Clinical Record",
-time:"Today • 10:45 AM",
-status:"Completed"
-},
+const [moduleFilter, setModuleFilter] = useState("All");
+const [actionFilter, setActionFilter] = useState("All");
 
+const visibleLogs = auditLogs.filter((log:any)=>{
 
-{
-action:"Patient record viewed",
-user:"Emily Carter",
-type:"Patient Data",
-time:"Today • 11:20 AM",
-status:"Viewed"
-},
+  // Practice managers can see their practice activity.
+  // Other users only see their own activity.
+  const permissionMatch =
+    currentUser?.role === "practice_manager"
+      ? log.practiceId === practice?.id
+      : log.actorUserId === currentUser?.id;
 
+  const searchText = `${log.action || ""} ${log.description || ""} ${log.entityType || ""}`.toLowerCase();
 
-{
-action:"New staff member invited",
-user:"Daniel Smith",
-type:"Account Management",
-time:"Yesterday • 03:15 PM",
-status:"Completed"
-},
+  const searchMatch = searchText.includes(search.toLowerCase());
+  const moduleMatch = moduleFilter === "All" || log.entityType === moduleFilter;
+  const actionMatch = actionFilter === "All" || log.action?.includes(actionFilter);
 
-
-{
-action:"AI summary generated",
-user:"System",
-type:"AI Activity",
-time:"Yesterday • 04:40 PM",
-status:"Completed"
-},
-
-{
-action:"Patient record deleted",
-user:"Practice Manager",
-type:"DELETE",
-time:"Today • 12:15 PM",
-status:"Completed"
-},
-
-{
-action:"Client record deleted",
-user:"Practice Manager",
-type:"DELETE",
-time:"Today • 12:20 PM",
-status:"Completed"
-}
-
-];
-
-
-const auditLogs = appAuditLogs.length ? appAuditLogs : logs;
-
-const filteredLogs = auditLogs.filter((log:any) => {
-  const text = `${log.action || ""} ${log.user || ""} ${log.type || ""}`.toLowerCase();
-  return text.includes(search.toLowerCase());
+  return permissionMatch && searchMatch && moduleMatch && actionMatch;
 });
 
 
@@ -182,7 +142,7 @@ Total Activities
 
 <p className="text-2xl font-bold">
 
-{auditLogs.length}
+{visibleLogs.length}
 
 </p>
 
@@ -380,32 +340,29 @@ text-sm
 
 
 
-<button
-
-className="
-flex
-items-center
-justify-center
-gap-2
-rounded-xl
-border
-border-slate-200
-bg-white
-px-5
-py-3
-font-medium
-text-slate-700
-"
-
+<select
+value={moduleFilter}
+onChange={(e)=>setModuleFilter(e.target.value)}
+className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
 >
+<option>All</option>
+<option>CREATE</option>
+<option>UPDATE</option>
+<option>DELETE</option>
+<option>RESTORE</option>
+</select>
 
-
-<Filter size={18}/>
-
-Filters
-
-
-</button>
+<select
+value={actionFilter}
+onChange={(e)=>setActionFilter(e.target.value)}
+className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+>
+<option>All</option>
+<option>created</option>
+<option>updated</option>
+<option>deleted</option>
+<option>restored</option>
+</select>
 
 
 
@@ -443,7 +400,7 @@ divide-y
 
 {
 
-filteredLogs.length === 0
+visibleLogs.length === 0
 
 ?
 
@@ -455,12 +412,12 @@ No activity recorded yet.
 
 :
 
-filteredLogs.map((log:any)=>(
+visibleLogs.map((log:any)=>(
 
 
 <div
 
-key={log.action}
+key={log.id}
 
 className="
 flex
@@ -525,7 +482,7 @@ text-sm
 text-slate-500
 ">
 
-{log.user} • {log.type}
+{log.actorUserId || "System"} • {log.entityType}
 
 </p>
 
@@ -556,7 +513,7 @@ text-slate-500
 
 <Clock size={15}/>
 
-{log.time}
+{new Date(log.createdAt).toLocaleString()}
 
 </div>
 
@@ -573,7 +530,7 @@ font-medium
 text-green-700
 ">
 
-{log.status}
+Completed
 
 </span>
 
