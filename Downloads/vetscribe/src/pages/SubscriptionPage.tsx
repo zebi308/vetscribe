@@ -108,8 +108,11 @@ const totalTrialDays =
 
       setVoucherLoading(true);
 
+      const { supabase } = await import("../lib/supabase");
+      if (!supabase) throw new Error("Supabase not configured");
+
       const { data, error } =
-        await (await import("../lib/supabase")).supabase
+        await supabase
         .from("subscription_vouchers")
         .select("*")
         .eq(
@@ -188,8 +191,11 @@ const totalTrialDays =
     try{
       setCheckoutLoading(planId);
 
+      const { supabase } = await import("../lib/supabase");
+      if (!supabase) throw new Error("Supabase not configured");
+
       const { data, error } =
-        await (await import("../lib/supabase")).supabase.functions.invoke(
+        await supabase.functions.invoke(
           "create-checkout-session",
           {
             body:{

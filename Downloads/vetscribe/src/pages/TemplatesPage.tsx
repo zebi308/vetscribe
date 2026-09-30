@@ -8,11 +8,103 @@ import {
 } from "lucide-react";
 
 import { useState } from "react";
-import { useAppState } from "../lib/AppState";
 
 
+
+type Template = {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  description: string;
+  status: "Active" | "Draft";
+};
+
+const emptyForm = {
+  name: "",
+  type: "",
+  category: "",
+  description: ""
+};
+
+const defaultTemplates: Template[] = [
+  {
+    id: "default-soap",
+    name: "SOAP Consultation Note",
+    type: "Consultation",
+    category: "Clinical Notes",
+    description: "Subjective, Objective, Assessment and Plan structure for routine consultations.",
+    status: "Active"
+  },
+  {
+    id: "default-vaccination",
+    name: "Vaccination Record",
+    type: "Preventive Care",
+    category: "Clinical Notes",
+    description: "Records vaccine type, batch number, date given and next due date.",
+    status: "Active"
+  },
+  {
+    id: "default-discharge",
+    name: "Post-Surgery Discharge",
+    type: "Surgery",
+    category: "Client Communication",
+    description: "Aftercare instructions and warning signs to send home with the owner.",
+    status: "Active"
+  },
+  {
+    id: "default-dental",
+    name: "Dental Procedure Note",
+    type: "Dental",
+    category: "Clinical Notes",
+    description: "Dental grading, extractions performed and follow-up plan.",
+    status: "Draft"
+  }
+];
 
 export function TemplatesPage(){
+
+  const [templates, setTemplates] = useState<Template[]>(defaultTemplates);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
+
+  function editTemplate(template: Template){
+    setEditingId(template.id);
+    setForm({
+      name: template.name,
+      type: template.type,
+      category: template.category,
+      description: template.description
+    });
+    setShowForm(true);
+  }
+
+  function saveTemplate(){
+    if(!form.name.trim()) return;
+
+    if(editingId){
+      setTemplates(
+        templates.map((t)=>
+          t.id === editingId ? { ...t, ...form } : t
+        )
+      );
+    }else{
+      setTemplates([
+        ...templates,
+        {
+          id: String(Date.now()),
+          ...form,
+          status: "Active"
+        }
+      ]);
+    }
+
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(false);
+  }
+
 
 
 
@@ -71,7 +163,7 @@ Create and manage AI documentation templates.
 
 <button
 
-onClick={()=>setShowForm(true)}
+onClick={()=>{ setEditingId(null); setForm(emptyForm); setShowForm(true); }}
 
 className="
 flex
@@ -112,7 +204,7 @@ New Template
 <input className="w-full rounded-lg border p-3" placeholder="Type" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}/>
 <input className="w-full rounded-lg border p-3" placeholder="Category" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
 <textarea className="w-full rounded-lg border p-3" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
-<div className="flex gap-3"><button onClick={saveTemplate} className="rounded-lg bg-teal-600 px-5 py-2 text-white">Save</button><button onClick={()=>setShowForm(false)} className="rounded-lg border px-5 py-2">Cancel</button></div>
+<div className="flex gap-3"><button onClick={saveTemplate} className="rounded-lg bg-teal-600 px-5 py-2 text-white">Save</button><button onClick={()=>{ setShowForm(false); setEditingId(null); setForm(emptyForm); }} className="rounded-lg border px-5 py-2">Cancel</button></div>
 </div>
 )}
 
@@ -309,7 +401,7 @@ templates.map((template)=>(
 
 <div
 
-key={template.name}
+key={template.id}
 
 className="
 rounded-2xl
