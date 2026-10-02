@@ -498,6 +498,8 @@ export function ConsultationRoomPage(){
 
       setLoading(true);
 
+      if(!supabase) throw new Error("Supabase not configured");
+
       const {
   data:{
     session
