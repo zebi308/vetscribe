@@ -822,9 +822,12 @@ console.log(
   "CURRENT SESSION BEFORE PRACTICE INSERT:",
   await supabase.auth.getSession()
 );
-    const { data: practiceData, error: practiceError } = await supabase
+    const practiceId = crypto.randomUUID();
+
+    const { error: practiceError } = await supabase
       .from("practices")
       .insert({
+        id: practiceId,
         name: form.practiceName,
         slug,
         subdomain: slug,
@@ -833,11 +836,11 @@ console.log(
         postcode: "",
         phone: "",
         email: form.email,
-      })
-      .select()
-      .single();
+      });
 
     if (practiceError) throw practiceError;
+
+    const practiceData = { id: practiceId };
 
     const { error: profileError } = await supabase.from("profiles").insert({
       auth_user_id: userData.user.id,
