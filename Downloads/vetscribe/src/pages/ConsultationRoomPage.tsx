@@ -498,22 +498,37 @@ export function ConsultationRoomPage(){
 
       setLoading(true);
 
-      const response =
-        await fetch(
-          "/api/clinical-note",
-          {
-            method:"POST",
-            headers:{
-              "Content-Type":
-                "application/json"
-            },
-            body:JSON.stringify({
-              transcript:notes,
-              patient,
-              client
-            })
-          }
-        );
+      const {
+  data:{
+    session
+  }
+} = await supabase.auth.getSession();
+
+if(!session){
+
+  throw new Error(
+    "Your session has expired. Please login again."
+  );
+
+}
+
+const response =
+  await fetch(
+    "/api/clinical-note",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:
+          `Bearer ${session.access_token}`
+      },
+      body:JSON.stringify({
+        transcript:notes,
+        patient,
+        client
+      })
+    }
+  );
 
       if(!response.ok){
 
