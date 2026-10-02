@@ -194,7 +194,7 @@ sex:form.sex as any,
 
 neutered:false,
 
-dateOfBirth:form.dateOfBirth || null,
+dateOfBirth:form.dateOfBirth,
 
 microchipNumber:undefined,
 
