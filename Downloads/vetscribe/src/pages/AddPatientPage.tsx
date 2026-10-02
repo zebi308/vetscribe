@@ -52,6 +52,8 @@ colour:""
 
 const [loading,setLoading]=useState(false);
 
+const [errors,setErrors]=useState<Record<string,string>>({});
+
 
 
 
@@ -72,6 +74,12 @@ setForm(prev=>({
 [field]:value
 
 }));
+
+setErrors(prev=>{
+  const updated = {...prev};
+  delete updated[field];
+  return updated;
+});
 
 
 }
@@ -125,6 +133,24 @@ return;
 
 
 
+const validationErrors:Record<string,string> = {};
+
+if(!form.clientId) validationErrors.clientId = "Owner / Client is required.";
+if(!form.name.trim()) validationErrors.name = "Patient name is required.";
+if(!form.species.trim()) validationErrors.species = "Species is required.";
+if(!form.breed.trim()) validationErrors.breed = "Breed is required.";
+if(!form.sex.trim()) validationErrors.sex = "Sex is required.";
+if(!form.dateOfBirth) validationErrors.dateOfBirth = "Date of birth is required.";
+if(!form.weightKg) validationErrors.weightKg = "Weight is required.";
+if(!form.colour.trim()) validationErrors.colour = "Colour is required.";
+
+if(Object.keys(validationErrors).length > 0){
+  setErrors(validationErrors);
+  return;
+}
+
+setErrors({});
+
 try{
 
 
@@ -168,7 +194,7 @@ sex:form.sex as any,
 
 neutered:false,
 
-dateOfBirth:form.dateOfBirth,
+dateOfBirth:form.dateOfBirth || null,
 
 microchipNumber:undefined,
 
@@ -505,6 +531,8 @@ Species
 
 <select
 
+required
+
 value={form.species}
 
 onChange={(e)=>
@@ -603,6 +631,8 @@ Breed
 
 <input
 
+required
+
 value={form.breed}
 
 onChange={(e)=>
@@ -653,6 +683,8 @@ Sex
 
 
 <select
+
+required
 
 value={form.sex}
 
@@ -747,6 +779,8 @@ Date of Birth
 
 type="date"
 
+required
+
 value={form.dateOfBirth}
 
 onChange={(e)=>
@@ -799,6 +833,8 @@ Weight KG
 
 type="number"
 
+required
+
 value={form.weightKg}
 
 onChange={(e)=>
@@ -849,6 +885,8 @@ Colour
 
 
 <input
+
+required
 
 value={form.colour}
 

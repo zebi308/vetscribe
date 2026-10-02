@@ -346,10 +346,11 @@ onChange={(e)=>setModuleFilter(e.target.value)}
 className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
 >
 <option>All</option>
-<option>CREATE</option>
-<option>UPDATE</option>
-<option>DELETE</option>
-<option>RESTORE</option>
+<option>STAFF</option>
+<option>CLIENT</option>
+<option>PATIENT</option>
+<option>CONSULTATION</option>
+<option>SUBSCRIPTION</option>
 </select>
 
 <select
@@ -449,9 +450,13 @@ text-slate-600
 ">
 
 {
-log.type === "DELETE"
+log.action?.toLowerCase().includes("delete")
 ?
 <Trash2 size={20}/>
+:
+log.entityType === "CONSULTATION"
+?
+<FileText size={20}/>
 :
 <User size={20}/>
 }
@@ -482,9 +487,26 @@ text-sm
 text-slate-500
 ">
 
-{log.actorUserId || "System"} • {log.entityType}
+{log.actorEmail || "System"} • {log.entityType}
 
 </p>
+
+{log.metadata && Object.keys(log.metadata).length > 0 && (
+
+<p className="
+mt-2
+text-xs
+text-slate-400
+">
+
+{Object.entries(log.metadata)
+.filter(([key]) => key !== "actorEmail")
+.map(([key,value]) => `${key}: ${typeof value === "object" ? JSON.stringify(value) : value}`)
+.join(" • ")}
+
+</p>
+
+)}
 
 
 

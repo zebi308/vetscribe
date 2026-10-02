@@ -130,21 +130,6 @@ return;
 try{
 
 
-const consultationLimit =
-checkSubscriptionLimit("consultations");
-
-
-if(!consultationLimit.allowed){
-
-console.error(
-"CONSULTATION LIMIT REACHED"
-);
-
-return;
-
-}
-
-
 setLoading(true);
 
 

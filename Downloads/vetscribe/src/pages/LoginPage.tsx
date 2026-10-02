@@ -4,9 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Lock,
   Mail,
-  LogIn,
-  PawPrint
+  LogIn
 } from "lucide-react";
+
+import logo from "../assets/Logoo.png";
 
 import { useAppState } from "../lib/AppState";
 import { useToast } from "../lib/ToastContext";
@@ -169,19 +170,11 @@ shadow-sm
 
 <div className="flex justify-center">
 
-<div className="
-grid
-h-14
-w-14
-place-items-center
-rounded-xl
-bg-teal-600
-text-white
-">
-
-<PawPrint size={28}/>
-
-</div>
+<img
+  src={logo}
+  alt="VetScribe"
+  className="h-14 w-14 object-contain"
+/>
 
 </div>
 

@@ -629,15 +629,35 @@ async function loadAppData() {
     metadata: any = {}
   ) {
 
+    if (!practice?.id) {
+      console.error(
+        "AUDIT LOG SKIPPED: Missing practice id"
+      );
+      return;
+    }
+
+    const actorId =
+      currentUser?.id || null;
+
+    const cleanEntityId =
+      entityId && entityId.trim()
+        ? entityId
+        : null;
+
+
     const log: any = {
       id: crypto.randomUUID(),
-      practiceId: practice?.id || "",
+      practiceId: practice.id,
       action,
-      actorUserId: currentUser?.id || "",
+      actorUserId: actorId,
+      actorEmail: currentUser?.email || "",
       entityType: type,
-      entityId,
+      entityId: cleanEntityId,
       description: action,
-      metadata,
+      metadata: {
+        ...metadata,
+        actorEmail: currentUser?.email || ""
+      },
       createdAt: new Date().toISOString()
     };
 
@@ -674,6 +694,7 @@ async function loadAppData() {
     }
 
   }
+
 
   async function login(email: string, password: string): Promise<boolean> {
 
@@ -1084,6 +1105,12 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       clinical_quality: clinicalQuality || null,
       version: consultation.version || 0,
     });
+
+    await createAuditLog(
+      "Clinical note edited",
+      "CONSULTATION",
+      id
+    );
   }
 
   async function approveConsultation(
@@ -1115,6 +1142,12 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       version: (consultation.version || 0) + 1,
       change_reason: reason || null,
     });
+
+    await createAuditLog(
+      "Clinical note approved",
+      "CONSULTATION",
+      id
+    );
   }
 
   async function archiveConsultation(id: string) {
@@ -1714,9 +1747,10 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
     await createAuditLog(
       active
-        ? `User activated: ${id}`
-        : `User disabled: ${id}`,
-      "UPDATE"
+        ? "Veterinarian activated"
+        : "Veterinarian deactivated",
+      "STAFF",
+      id
     );
 
   }
@@ -1802,6 +1836,15 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
 
     if (error) throw error;
+
+    await createAuditLog(
+      "Client updated",
+      "CLIENT",
+      id,
+      {
+        changes
+      }
+    );
 
   }
 
@@ -1923,7 +1966,7 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
     if (!supabase) return;
 
-    await supabase.from("patients").insert({
+    const { error } = await supabase.from("patients").insert({
       id: patient.id,
       practice_id: patient.practiceId,
       client_id: patient.clientId,
@@ -1937,6 +1980,16 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       colour: patient.colour,
       weight_kg: patient.weightKg,
     });
+
+    if (error) {
+      console.error("PATIENT INSERT ERROR:", error);
+
+      setPatients((prev) =>
+        prev.filter((item) => item.id !== patient.id)
+      );
+
+      throw error;
+    }
 
     await createAuditLog(
       `Patient created: ${patient.name}`,
@@ -1992,6 +2045,15 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       .eq("id", id);
 
     if (error) throw error;
+
+    await createAuditLog(
+      "Patient updated",
+      "PATIENT",
+      id,
+      {
+        changes
+      }
+    );
   }
 
   async function deletePatient(
@@ -2479,6 +2541,15 @@ async function updatePractice(data:any): Promise<void>{
   async function assignSubscription(payload:any){
 
     const subscription = await createSubscription(payload);
+
+    await createAuditLog(
+      "Subscription changed",
+      "SUBSCRIPTION",
+      payload.practice_id,
+      {
+        subscription
+      }
+    );
 
     await createAnalyticsEvent({
       practice_id: payload.practice_id,

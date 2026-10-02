@@ -441,6 +441,8 @@ export interface AuditLog {
 
   actorUserId:string;
 
+  actorEmail?:string;
+
   entityType:string;
 
   entityId:string;

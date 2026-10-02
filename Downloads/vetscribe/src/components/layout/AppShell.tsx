@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import SubscriptionStatusBanner from "../SubscriptionStatusBanner";
+import logo from "../../assets/Logoo.png";
 
 import {
   Activity,
@@ -143,23 +144,15 @@ export function AppShell() {
 
           <div className="flex items-center gap-2 text-xl font-bold text-slate-900">
 
-            <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-xl bg-teal-600 text-white">
+            <div className="h-10 w-10 overflow-hidden rounded-xl">
 
-              {
-                practice?.logoUrl ?
+<img
+  src={logo}
+  alt="VetScribe"
+  className="h-full w-full object-contain"
+/>
 
-                <img
-                  src={practice.logoUrl}
-                  alt="logo"
-                  className="h-full w-full object-cover"
-                />
-
-                :
-
-                <HeartPulse size={22}/>
-              }
-
-            </div>
+</div>
 
             VetScribe
 

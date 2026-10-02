@@ -14,10 +14,10 @@ Building2,
 Mail,
 Lock,
 User,
-PawPrint,
 UserRoundPlus
 } from "lucide-react";
 
+import logo from "../assets/Logoo.png";
 
 import {
 useAppState
@@ -249,19 +249,11 @@ justify-center
 ">
 
 
-<div className="
-grid
-h-14
-w-14
-place-items-center
-rounded-xl
-bg-teal-600
-text-white
-">
-
-<PawPrint size={28}/>
-
-</div>
+<img
+  src={logo}
+  alt="VetScribe"
+  className="h-14 w-14 object-contain"
+/>
 
 
 </div>

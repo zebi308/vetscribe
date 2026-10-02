@@ -1098,7 +1098,9 @@ actorUserId:
 
 log.actor_user_id || "system",
 
+actorEmail:
 
+log.metadata?.actorEmail || "",
 
 entityType:
 
