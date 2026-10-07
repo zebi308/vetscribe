@@ -1156,8 +1156,13 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
     const approvalTime = new Date().toISOString();
     const newVersion = (consultation.version || 0) + 1;
-
+console.log("APPROVAL DATA", {
+  consultationId: id,
+  consultationPractice: consultation.practiceId,
+  consultationPatient: consultation.patientId,
+});
     const { error: noteError } = await supabase
+    
       .from("clinical_notes")
       .upsert({
         consultation_id: id,
