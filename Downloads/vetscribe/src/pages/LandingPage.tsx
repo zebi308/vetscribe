@@ -1,10 +1,337 @@
+import { useEffect, useState } from "react";
+
 import "./landing.css";
+
+import demoVideo from "../assets/VetScribe-demo.mp4";
 
 import { Navbar } from "../components/landing/Navbar";
 import { Hero } from "../components/landing/Hero";
 import { PricingsSection } from "../components/landing/PricingSection";
 import { FAQ } from "../components/landing/FAQ";
 import { Footer } from "../components/landing/footer";
+
+
+
+function HeroAIDemo() {
+
+  const [stage, setStage] = useState(0);
+
+
+  useEffect(() => {
+
+    const interval = window.setInterval(() => {
+
+      setStage((current) => (current + 1) % 3);
+
+    }, 3600);
+
+
+    return () => window.clearInterval(interval);
+
+  }, []);
+
+
+  return (
+
+    <div className="hero-ai-demo-slot">
+
+
+      <div className="hero-ai-demo-window">
+
+
+        <div className="hero-ai-demo-topbar">
+
+
+          <div>
+
+            <strong>
+              VetScribe AI
+            </strong>
+
+
+            <span>
+              Clinical Documentation Assistant
+            </span>
+
+          </div>
+
+
+          <div className="hero-ai-demo-ready">
+
+            <span className="hero-ai-demo-ready-dot" />
+
+            Live
+
+          </div>
+
+
+        </div>
+
+
+
+
+        <div className="hero-ai-demo-patient">
+
+
+          <div>
+
+            <span className="hero-ai-demo-kicker">
+              CURRENT CONSULTATION
+            </span>
+
+            <strong>
+              Bella
+            </strong>
+
+            <p>
+              Labrador Retriever • 5 years
+            </p>
+
+          </div>
+
+
+          <div>
+
+            <span className="hero-ai-demo-kicker">
+              OWNER
+            </span>
+
+            <strong>
+              Sarah Williams
+            </strong>
+
+          </div>
+
+
+        </div>
+
+
+
+
+        <div className="hero-ai-demo-stage-area">
+
+
+          {stage === 0 && (
+
+            <div className="hero-ai-demo-stage hero-ai-recording">
+
+
+              <span className="hero-ai-demo-stage-label">
+                01 · RECORDING
+              </span>
+
+
+              <h3>
+                Consultation in progress
+              </h3>
+
+
+              <div className="hero-ai-recording-status">
+
+                <span className="hero-ai-recording-dot" />
+
+                Recording consultation
+
+              </div>
+
+
+              <div className="hero-ai-waveform" aria-hidden="true">
+
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+
+              </div>
+
+
+              <div className="hero-ai-conversation">
+
+                <p>
+                  <strong>Vet:</strong> How long has Bella been scratching?
+                </p>
+
+                <p>
+                  <strong>Owner:</strong> About three weeks, mostly at night.
+                </p>
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+
+
+          {stage === 1 && (
+
+            <div className="hero-ai-demo-stage hero-ai-processing">
+
+
+              <span className="hero-ai-demo-stage-label">
+                02 · PROCESSING
+              </span>
+
+
+              <h3>
+                Drafting the clinical note
+              </h3>
+
+
+              <div className="hero-ai-processing-loader" aria-hidden="true">
+
+                <span />
+                <span />
+                <span />
+
+              </div>
+
+
+              <div className="hero-ai-processing-list">
+
+                <p>
+                  ✓ Clinical history extracted
+                </p>
+
+                <p>
+                  ✓ Examination details structured
+                </p>
+
+                <p>
+                  ✓ Assessment and plan organised
+                </p>
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+
+
+          {stage === 2 && (
+
+            <div className="hero-ai-demo-stage hero-ai-soap">
+
+
+              <span className="hero-ai-demo-stage-label">
+                03 · SOAP READY
+              </span>
+
+
+              <h3>
+                Draft clinical note ready
+              </h3>
+
+
+              <div className="hero-ai-soap-grid">
+
+
+                <div>
+
+                  <strong>
+                    S · Subjective
+                  </strong>
+
+                  <p>
+                    Three-week history of pruritus, worse at night.
+                    Owner reports redness around the abdomen and paws.
+                  </p>
+
+                </div>
+
+
+                <div>
+
+                  <strong>
+                    O · Objective
+                  </strong>
+
+                  <p>
+                    Clinical examination findings are structured
+                    and ready for the veterinarian to check.
+                  </p>
+
+                </div>
+
+
+                <div>
+
+                  <strong>
+                    A · Assessment
+                  </strong>
+
+                  <p>
+                    Pruritus with reported dermatological changes.
+                    Clinical judgement remains veterinarian-led.
+                  </p>
+
+                </div>
+
+
+                <div>
+
+                  <strong>
+                    P · Plan
+                  </strong>
+
+                  <p>
+                    Findings and next steps are organised into
+                    a structured draft clinical record.
+                  </p>
+
+                </div>
+
+
+              </div>
+
+
+              <div className="hero-ai-review-note">
+
+                Ready for veterinarian review before finalisation.
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+        </div>
+
+
+
+
+        <div className="hero-ai-demo-dots" aria-hidden="true">
+
+          <span className={stage === 0 ? "active" : ""} />
+          <span className={stage === 1 ? "active" : ""} />
+          <span className={stage === 2 ? "active" : ""} />
+
+        </div>
+
+
+      </div>
+
+
+    </div>
+
+  );
+
+}
 
 
 export function LandingPage() {
@@ -15,10 +342,17 @@ export function LandingPage() {
     <div className="landing">
 
 
-      <Navbar />
+      <div className="hero-shell">
+
+        <Navbar />
 
 
-      <Hero />
+        <Hero />
+
+
+        <HeroAIDemo />
+
+      </div>
 
 
 
@@ -30,25 +364,25 @@ export function LandingPage() {
         <div className="section-title problem-heading">
 
 
-  <span>THE PROBLEM</span>
+          <span>THE PROBLEM</span>
 
 
-  <h2>
-    The consultation doesn't end when the patient leaves.
-    Documentation does.
-  </h2>
+          <h2>
+            The consultation doesn't end when the patient leaves.
+            Documentation does.
+          </h2>
 
 
-  <p>
+          <p>
 
-    Veterinary professionals can spend valuable time after consultations
-    writing, formatting and completing clinical notes. This creates
-    administrative pressure and takes time away from patient care.
+            Veterinary professionals can spend valuable time after consultations
+            writing, formatting and completing clinical notes. This creates
+            administrative pressure and takes time away from patient care.
 
-  </p>
+          </p>
 
 
-</div>
+        </div>
 
 
 
@@ -105,12 +439,12 @@ export function LandingPage() {
 
 
             <p>
-              ✓ Faster patient records
+              ✓ Structured notes ready sooner
             </p>
 
 
             <p>
-              ✓ Vet reviews and approves
+              ✓ More consistent documentation workflow
             </p>
 
 
@@ -262,6 +596,10 @@ export function LandingPage() {
 
       </section>
 
+
+
+
+
       {/* BEFORE / AFTER PRODUCT DEMONSTRATION */}
 
 
@@ -287,8 +625,8 @@ export function LandingPage() {
 
           <p>
 
-            VetScribe captures the consultation and prepares a structured
-            draft for the veterinarian to review, edit and approve.
+            See how consultation details can be transformed into a clear,
+            structured SOAP-style draft.
 
           </p>
 
@@ -300,6 +638,27 @@ export function LandingPage() {
 
 
 
+
+
+
+        <div className="product-demo-video-wrapper">
+
+          <video
+            className="product-demo-video"
+            controls
+            playsInline
+            preload="metadata"
+          >
+            <source
+              src={demoVideo}
+              type="video/mp4"
+            />
+
+            Your browser does not support video playback.
+
+          </video>
+
+        </div>
 
 
         <div className="demo-grid">
@@ -339,7 +698,8 @@ export function LandingPage() {
 
               <p>
 
-                <strong>Owner:</strong> "About three weeks, mostly at night."
+                <strong>Owner:</strong> "About three weeks, mostly at night.
+                She is eating and drinking normally."
 
               </p>
 
@@ -357,6 +717,26 @@ export function LandingPage() {
               <p>
 
                 <strong>Owner:</strong> "Yes, around her stomach and paws."
+
+              </p>
+
+
+
+              <p>
+
+                <strong>Vet:</strong> "Bella weighs 24.6 kg and her temperature
+                is 38.5°C. There is mild redness between the toes and across
+                the lower abdomen, with no open lesions."
+
+              </p>
+
+
+
+              <p>
+
+                <strong>Vet:</strong> "We will review her flea control, start
+                the agreed skin treatment and recheck her in two weeks, or
+                sooner if the itching becomes worse."
 
               </p>
 
@@ -397,7 +777,7 @@ export function LandingPage() {
 
             <h3>
 
-              AI-Drafted Clinical Note
+              AI-Drafted SOAP Note
 
             </h3>
 
@@ -405,60 +785,73 @@ export function LandingPage() {
 
 
 
-            <div className="clinical-note">
+            <div className="clinical-note soap-note-example">
 
 
-              <p>
+              <div className="soap-note-section">
 
-                <strong>History:</strong> Pruritus reported for approximately
-                three weeks, more noticeable at night.
+                <strong>
+                  S · Subjective
+                </strong>
 
-              </p>
+                <p>
+                  Three-week history of pruritus, more noticeable at night.
+                  Owner reports erythema around the ventral abdomen and paws.
+                  Appetite and water intake reported as normal.
+                </p>
 
-
-
-
-              <p>
-
-                <strong>Clinical Context:</strong> Owner reports redness around
-                the abdomen and paws.
-
-              </p>
+              </div>
 
 
 
+              <div className="soap-note-section">
+
+                <strong>
+                  O · Objective
+                </strong>
+
+                <p>
+                  Weight 24.6 kg. Temperature 38.5°C. Mild interdigital and
+                  ventral abdominal erythema noted. No open lesions observed.
+                </p>
+
+              </div>
 
 
-              <p>
 
-                <strong>Assessment:</strong> Clinical assessment to be completed
-                and confirmed by the veterinarian.
+              <div className="soap-note-section">
 
-              </p>
+                <strong>
+                  A · Assessment
+                </strong>
+
+                <p>
+                  Pruritic dermatitis with mild erythematous skin changes.
+                  Clinical assessment remains subject to the veterinarian's
+                  final judgement.
+                </p>
+
+              </div>
 
 
 
+              <div className="soap-note-section">
 
+                <strong>
+                  P · Plan
+                </strong>
 
-              <p>
+                <p>
+                  Review flea control, commence the agreed skin treatment and
+                  recheck in two weeks. Earlier reassessment advised if signs
+                  worsen.
+                </p>
 
-                <strong>Plan:</strong> Review findings and finalise the clinical
-                record following veterinary assessment.
-
-              </p>
+              </div>
 
 
 
             </div>
-
-
-
-
-            <p className="review-note">
-
-              Vet reviews, edits and approves the final clinical record.
-
-            </p>
 
 
 
@@ -702,96 +1095,114 @@ export function LandingPage() {
 
       </section>
 
-      {/* BUILT FOR VETERINARY PRACTICES */}
 
 
-      <section className="built-for-vets">
 
 
-        <div className="built-for-vets-heading">
+      {/* SECURITY & DATA */}
+
+
+      <section className="security-section">
+
+
+        <div className="security-heading">
+
+
+          <span className="security-eyebrow">
+            SECURITY & DATA
+          </span>
 
 
           <h2>
-
-            Not another generic AI assistant.
-
+            Your clinical data stays under your practice's control
           </h2>
 
 
-
           <p>
-
-            VetScribe is being built specifically around the documentation
-            needs of veterinary teams.
-
+            VetScribe is designed with secure access, practice-level data
+            separation and clear handling of consultation information.
           </p>
 
 
-
         </div>
 
 
-
-
-
-
-
-        <div className="vet-specific-grid">
+        <div className="security-grid">
 
 
           <div>
-            ✓ Veterinary terminology
+
+            <span className="security-card-icon">
+              01
+            </span>
+
+            <h3>
+              Secure practice access
+            </h3>
+
+            <p>
+              VetScribe uses encrypted connections, secure authentication,
+              database access controls and practice-level data separation.
+            </p>
+
           </div>
 
 
           <div>
-            ✓ Clinical documentation workflows
+
+            <span className="security-card-icon">
+              02
+            </span>
+
+            <h3>
+              Consultation audio
+            </h3>
+
+            <p>
+              Audio is temporarily processed for transcription and is not
+              stored by VetScribe after transcription is completed.
+            </p>
+
           </div>
 
 
           <div>
-            ✓ SOAP-style notes
+
+            <span className="security-card-icon">
+              03
+            </span>
+
+            <h3>
+              AI model training
+            </h3>
+
+            <p>
+              Consultation inputs and outputs are not shared with AI providers
+              for model-improvement purposes.
+            </p>
+
           </div>
 
 
           <div>
-            ✓ Patient-focused records
+
+            <span className="security-card-icon">
+              04
+            </span>
+
+            <h3>
+              Your practice owns the records
+            </h3>
+
+            <p>
+              Your practice owns its clinical data. VetScribe provides the
+              tools to create, manage and organise those records.
+            </p>
+
           </div>
-
-
-          <div>
-            ✓ Owner-friendly summaries
-          </div>
-
-
-          <div>
-            ✓ Designed for UK veterinary practices
-          </div>
-
 
 
         </div>
-
-
-
-
-
-
-
-        <div className="vet-positioning">
-
-
-          <p>
-
-            The goal isn't to replace the vet. It's to remove unnecessary
-            documentation work from the vet's day.
-
-          </p>
-
-
-
-        </div>
-
 
 
       </section>
@@ -821,6 +1232,67 @@ export function LandingPage() {
 
 
       <FAQ />
+
+
+
+
+
+
+
+
+      {/* CLOSING CTA */}
+
+
+      <section className="closing-cta">
+
+
+        <div className="closing-cta-inner">
+
+
+          <span className="closing-cta-eyebrow">
+            READY TO TRY VETSCRIBE?
+          </span>
+
+
+          <h2>
+            Spend less time on documentation and more time with patients.
+          </h2>
+
+
+          <p>
+            Start your free trial and see how VetScribe fits into your
+            veterinary workflow.
+          </p>
+
+
+          <div className="closing-cta-actions">
+
+
+            <button
+              className="closing-cta-primary"
+              onClick={() => {
+                window.location.href = "/register";
+              }}
+            >
+              Start Free Trial →
+            </button>
+
+
+            <a
+              className="closing-cta-secondary"
+              href="mailto:vetscribe@clariana.co.uk"
+            >
+              Contact VetScribe
+            </a>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
 
 
 

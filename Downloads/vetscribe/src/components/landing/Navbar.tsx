@@ -187,7 +187,7 @@ onClick={()=>navigate("/register")}
 
 >
 
-Register
+Start Free Trial
 
 </button>
 
