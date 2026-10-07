@@ -1165,7 +1165,6 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       approved_by: currentUser?.id,
       approved_at: approvalTime,
       version: newVersion,
-      change_reason: reason || null,
     });
 
   if (noteError) {
