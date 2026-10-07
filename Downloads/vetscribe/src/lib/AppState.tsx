@@ -1078,10 +1078,36 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
     if (!supabase) return;
 
-    await supabase
+    const dbChanges: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (changes.status !== undefined)
+      dbChanges.status = changes.status;
+
+    if (changes.archived !== undefined)
+      dbChanges.archived = changes.archived;
+
+    if (changes.transcript !== undefined)
+      dbChanges.transcript = changes.transcript;
+
+    if (changes.captureType !== undefined)
+      dbChanges.capture_type = changes.captureType;
+
+    if (changes.approvedBy !== undefined)
+      dbChanges.approved_by = changes.approvedBy;
+
+    if (changes.approvedAt !== undefined)
+      dbChanges.approved_at = changes.approvedAt;
+
+    const { error } = await supabase
       .from("consultations")
-      .update({ ...changes, updated_at: new Date().toISOString() })
+      .update(dbChanges)
       .eq("id", id);
+
+    if (error) {
+      throw error;
+    }
 
     await createAuditLog(
       `Consultation updated: ${id}`,
