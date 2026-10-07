@@ -1106,6 +1106,7 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       .eq("id", id);
 
     if (error) {
+      console.error("CONSULTATION UPDATE ERROR:", error);
       throw error;
     }
 
@@ -1143,51 +1144,48 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
   }
 
   async function approveConsultation(
-  id: string,
-  draft: ClinicalDraft,
-  reason?: string
-) {
-  const consultation = consultations.find((x) => x.id === id);
+    id: string,
+    draft: ClinicalDraft,
+    reason?: string
+  ) {
+    const consultation = consultations.find((x) => x.id === id);
 
-  if (!consultation) throw new Error("Consultation not found");
+    if (!consultation) throw new Error("Consultation not found");
 
-  if (!supabase) return;
+    if (!supabase) throw new Error("Supabase not configured");
 
-  const approvalTime = new Date().toISOString();
-  const newVersion = (consultation.version || 0) + 1;
+    const approvalTime = new Date().toISOString();
+    const newVersion = (consultation.version || 0) + 1;
 
-  // 1. Save clinical note + approval metadata first
-  const { error: noteError } = await supabase
-    .from("clinical_notes")
-    .upsert({
-      consultation_id: id,
-      structured_content: draft,
-      approved_by: currentUser?.id,
-      approved_at: approvalTime,
+    const { error: noteError } = await supabase
+      .from("clinical_notes")
+      .upsert({
+        consultation_id: id,
+        structured_content: draft,
+        approved_by: currentUser?.id,
+        approved_at: approvalTime,
+        version: newVersion,
+      });
+
+    if (noteError) {
+      console.error("CLINICAL NOTE APPROVAL ERROR:", noteError);
+      throw noteError;
+    }
+
+    await updateConsultation(id, {
+      status: "approved",
+      clinicalNote: draft,
+      approvedBy: currentUser?.id,
+      approvedAt: approvalTime,
       version: newVersion,
     });
 
-  if (noteError) {
-    throw noteError;
+    await createAuditLog(
+      "Clinical note approved",
+      "CONSULTATION",
+      id
+    );
   }
-
-  // 2. Now approve consultation
-  const updated: Partial<Consultation> = {
-    status: "approved",
-    clinicalNote: draft,
-    approvedBy: currentUser?.id,
-    approvedAt: approvalTime,
-    version: newVersion,
-  };
-
-  await updateConsultation(id, updated);
-
-  await createAuditLog(
-    "Clinical note approved",
-    "CONSULTATION",
-    id
-  );
-}
 
   async function archiveConsultation(id: string) {
     await updateConsultation(id, {
