@@ -1161,10 +1161,12 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       .from("clinical_notes")
       .upsert({
         consultation_id: id,
-        structured_content: draft,
-        approved_by: currentUser?.id,
-        approved_at: approvalTime,
-        version: newVersion,
+    practice_id: consultation.practiceId,
+    patient_id: consultation.patientId,
+    structured_content: draft,
+    approved_by: currentUser?.id,
+    approved_at: approvalTime,
+    version: newVersion,
       });
 
     if (noteError) {
