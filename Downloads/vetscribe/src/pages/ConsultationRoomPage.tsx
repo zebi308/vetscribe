@@ -153,7 +153,22 @@ export function ConsultationRoomPage(){
   const [transcribing, setTranscribing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
-  const audioBlobRef = useRef<Blob | null>(null);
+  // Streaming transcription: record small, self-contained WebM segments and
+  // transcribe them in the background. The veterinarian still presses
+  // Start once and Stop once; segmentation is completely automatic.
+  const RECORDING_SEGMENT_MS = 60000;
+
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const segmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const segmentIndexRef = useRef(0);
+  const segmentTranscriptsRef = useRef<string[]>([]);
+  const transcriptionQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingTranscriptionsRef = useRef(0);
+  const transcriptionErrorRef = useRef<string | null>(null);
+  const stoppingRecordingRef = useRef(false);
+  const segmentActiveElapsedRef = useRef(0);
+  const segmentActiveStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
 
@@ -225,64 +240,367 @@ export function ConsultationRoomPage(){
     `;
   }
 
+  function clearRecordingSegmentTimer(){
+
+    if(segmentTimerRef.current){
+
+      clearTimeout(
+        segmentTimerRef.current
+      );
+
+      segmentTimerRef.current = null;
+    }
+
+  }
+
+  function stopRecordingStreamTracks(){
+
+    const stream =
+      recordingStreamRef.current;
+
+    if(stream){
+
+      stream
+        .getTracks()
+        .forEach(
+          track =>
+            track.stop()
+        );
+    }
+
+    recordingStreamRef.current = null;
+  }
+
+  function scheduleRecordingSegmentStop(
+    recorder:MediaRecorder,
+    delay:number
+  ){
+
+    clearRecordingSegmentTimer();
+
+    segmentTimerRef.current =
+      setTimeout(
+        () => {
+
+          if(
+            recorder.state === "recording"
+          ){
+
+            recorder.stop();
+          }
+
+        },
+        Math.max(
+          250,
+          delay
+        )
+      );
+  }
+
+  function queueRecordingSegmentForTranscription(
+    blob:Blob,
+    segmentIndex:number
+  ){
+
+    if(blob.size === 0){
+      return;
+    }
+
+    pendingTranscriptionsRef.current += 1;
+
+    setTranscribing(true);
+
+    transcriptionQueueRef.current =
+      transcriptionQueueRef.current
+        .then(
+          async () => {
+
+            if(!supabase){
+
+              throw new Error(
+                "Supabase not configured"
+              );
+            }
+
+            const {
+              data:{
+                session
+              }
+            } =
+              await supabase.auth.getSession();
+
+            if(!session){
+
+              throw new Error(
+                "Your session has expired. Please login again."
+              );
+            }
+
+            console.log(
+              `TRANSCRIBING SEGMENT ${segmentIndex + 1}:`,
+              `${(
+                blob.size /
+                1024 /
+                1024
+              ).toFixed(2)} MB`
+            );
+
+            const response =
+              await fetch(
+                "/api/transcribe",
+                {
+                  method:"POST",
+                  headers:{
+                    "Content-Type":
+                      "audio/webm",
+                    Authorization:
+                      `Bearer ${session.access_token}`
+                  },
+                  body:blob
+                }
+              );
+
+            const responseText =
+              await response.text();
+
+            let data:any = {};
+
+            if(responseText){
+
+              try{
+
+                data =
+                  JSON.parse(
+                    responseText
+                  );
+              }
+              catch{
+
+                data = {
+                  error:responseText
+                };
+              }
+            }
+
+            if(!response.ok){
+
+              throw new Error(
+                data.error ||
+                responseText ||
+                "Transcription failed."
+              );
+            }
+
+            const segmentText =
+              String(
+                data.text || ""
+              ).trim();
+
+            if(segmentText){
+
+              segmentTranscriptsRef.current[
+                segmentIndex
+              ] = segmentText;
+            }
+
+          }
+        )
+        .catch(
+          error => {
+
+            const message =
+              error instanceof Error
+                ? error.message
+                : "Transcription failed.";
+
+            transcriptionErrorRef.current =
+              message;
+
+            console.error(
+              `TRANSCRIPTION SEGMENT ${segmentIndex + 1} ERROR`,
+              error
+            );
+          }
+        )
+        .finally(
+          () => {
+
+            pendingTranscriptionsRef.current =
+              Math.max(
+                0,
+                pendingTranscriptionsRef.current - 1
+              );
+
+            if(
+              pendingTranscriptionsRef.current === 0
+            ){
+
+              setTranscribing(false);
+            }
+
+          }
+        );
+  }
+
+  function startRecordingSegment(
+    stream:MediaStream
+  ){
+
+    if(stoppingRecordingRef.current){
+      return;
+    }
+
+    const recorder =
+      new MediaRecorder(
+        stream,
+        {
+          mimeType:"audio/webm;codecs=opus"
+        }
+      );
+
+    const segmentParts:Blob[] = [];
+
+    const segmentIndex =
+      segmentIndexRef.current;
+
+    segmentIndexRef.current += 1;
+
+    recorder.ondataavailable =
+      event => {
+
+        if(event.data.size > 0){
+
+          segmentParts.push(
+            event.data
+          );
+        }
+
+      };
+
+    recorder.onstop = () => {
+
+      clearRecordingSegmentTimer();
+
+      segmentActiveElapsedRef.current = 0;
+      segmentActiveStartedAtRef.current = null;
+
+      const blob =
+        new Blob(
+          segmentParts,
+          {
+            type:"audio/webm"
+          }
+        );
+
+      if(blob.size > 0){
+
+        queueRecordingSegmentForTranscription(
+          blob,
+          segmentIndex
+        );
+      }
+
+      if(stoppingRecordingRef.current){
+
+        stopRecordingStreamTracks();
+
+        mediaRecorderRef.current = null;
+        setMediaRecorder(null);
+
+        setRecordingReady(true);
+
+        return;
+      }
+
+      if(paused){
+
+        mediaRecorderRef.current = null;
+        setMediaRecorder(null);
+
+        return;
+      }
+
+      startRecordingSegment(
+        stream
+      );
+    };
+
+    recorder.onerror =
+      event => {
+
+        console.error(
+          "MEDIA RECORDER ERROR",
+          event
+        );
+
+        transcriptionErrorRef.current =
+          "The recording encountered an error.";
+      };
+
+    recorder.start();
+
+    mediaRecorderRef.current =
+      recorder;
+
+    setMediaRecorder(
+      recorder
+    );
+
+    segmentActiveElapsedRef.current = 0;
+    segmentActiveStartedAtRef.current = Date.now();
+
+    scheduleRecordingSegmentStop(
+      recorder,
+      RECORDING_SEGMENT_MS
+    );
+  }
+
   async function startRecording(){
 
     try{
+
+      if(
+        pendingTranscriptionsRef.current > 0
+      ){
+
+        showToast(
+          "Please wait for the previous recording to finish processing before starting another recording.",
+          "warning"
+        );
+
+        return;
+      }
 
       const stream =
         await navigator.mediaDevices.getUserMedia({
           audio:true
         });
 
-      const recorder =
-        new MediaRecorder(
-          stream,
-          {
-            mimeType:"audio/webm;codecs=opus"
-          }
-        );
+      recordingStreamRef.current =
+        stream;
 
-      const chunks: Blob[] = [];
+      stoppingRecordingRef.current = false;
+      segmentIndexRef.current = 0;
+      segmentTranscriptsRef.current = [];
+      transcriptionQueueRef.current = Promise.resolve();
+      pendingTranscriptionsRef.current = 0;
+      transcriptionErrorRef.current = null;
+      segmentActiveElapsedRef.current = 0;
+      segmentActiveStartedAtRef.current = null;
 
-      recorder.ondataavailable =
-        event => {
-
-          if(event.data.size > 0){
-
-            chunks.push(
-              event.data
-            );
-          }
-
-        };
-
-      recorder.onstop = () => {
-
-        const blob =
-          new Blob(
-            chunks,
-            {
-              type:"audio/webm"
-            }
-          );
-
-        audioBlobRef.current =
-          blob;
-
-        setRecordingReady(true);
-      };
-
-      recorder.start(1000);
-
-      setMediaRecorder(recorder);
-
+      setRecordingReady(false);
+      setTranscribing(false);
       setSeconds(0);
-
       setRecording(true);
-
       setPaused(false);
+
+      startRecordingSegment(
+        stream
+      );
     }
     catch(error){
+
+      stopRecordingStreamTracks();
 
       console.error(
         "RECORDING ERROR",
@@ -299,15 +617,32 @@ export function ConsultationRoomPage(){
 
   function togglePause(){
 
-    if(!mediaRecorder){
+    const recorder =
+      mediaRecorderRef.current ||
+      mediaRecorder;
+
+    if(!recorder){
       return;
     }
 
     if(
-      mediaRecorder.state === "recording"
+      recorder.state === "recording"
     ){
 
-      mediaRecorder.pause();
+      if(
+        segmentActiveStartedAtRef.current !== null
+      ){
+
+        segmentActiveElapsedRef.current +=
+          Date.now() -
+          segmentActiveStartedAtRef.current;
+      }
+
+      segmentActiveStartedAtRef.current = null;
+
+      clearRecordingSegmentTimer();
+
+      recorder.pause();
 
       setPaused(true);
 
@@ -315,30 +650,53 @@ export function ConsultationRoomPage(){
     }
 
     if(
-      mediaRecorder.state === "paused"
+      recorder.state === "paused"
     ){
 
-      mediaRecorder.resume();
+      recorder.resume();
 
       setPaused(false);
+
+      segmentActiveStartedAtRef.current = Date.now();
+
+      const remaining =
+        RECORDING_SEGMENT_MS -
+        segmentActiveElapsedRef.current;
+
+      scheduleRecordingSegmentStop(
+        recorder,
+        remaining
+      );
     }
 
   }
 
   function stopRecording(){
 
-    if(!mediaRecorder){
+    const recorder =
+      mediaRecorderRef.current ||
+      mediaRecorder;
+
+    if(!recorder){
       return;
     }
 
-    mediaRecorder.stop();
+    stoppingRecordingRef.current = true;
 
-    mediaRecorder.stream
-      .getTracks()
-      .forEach(
-        track =>
-          track.stop()
-      );
+    clearRecordingSegmentTimer();
+
+    if(
+      recorder.state !== "inactive"
+    ){
+
+      recorder.stop();
+    }
+    else{
+
+      stopRecordingStreamTracks();
+
+      setRecordingReady(true);
+    }
 
     setRecording(false);
 
@@ -347,9 +705,7 @@ export function ConsultationRoomPage(){
 
   async function submitRecording(){
 
-    const blob = audioBlobRef.current;
-
-    if(!blob){
+    if(!recordingReady){
 
       showToast(
         "Recording is not ready. Please record and stop the consultation first.",
@@ -360,61 +716,47 @@ export function ConsultationRoomPage(){
     }
 
     try{
-      
+
       setTranscribing(true);
-      if(!supabase) throw new Error("Supabase not configured");
-      const {
-        data:{
-          session
+
+      // Wait for every background segment transcription to finish.
+      await transcriptionQueueRef.current;
+
+      if(transcriptionErrorRef.current){
+
+        throw new Error(
+          transcriptionErrorRef.current
+        );
+      }
+
+      const transcript =
+        segmentTranscriptsRef.current
+          .filter(
+            value =>
+              Boolean(
+                value && value.trim()
+              )
+          )
+          .join("\n\n")
+          .trim();
+
+      if(!transcript){
+
+        throw new Error(
+          "No transcript was produced from the recording."
+        );
+      }
+
+      setNotes(
+        transcript
+      );
+
+      await updateConsultation(
+        consultationId,
+        {
+          transcript
         }
-      } =
-        await supabase.auth.getSession();
-
-      if(!session){
-
-        throw new Error(
-          "Your session has expired. Please login again."
-        );
-      }
-
-      const response =
-        await fetch(
-          "/api/transcribe",
-          {
-            method:"POST",
-            headers:{
-              "Content-Type":
-                "audio/webm",
-              Authorization:
-                `Bearer ${session.access_token}`
-            },
-            body:blob
-          }
-        );
-
-      const data = await response.json();
-
-      if(!response.ok){
-
-        throw new Error(
-          data.error ||
-          "Transcription failed."
-        );
-      }
-
-      if(data.text){
-
-        setNotes(
-          data.text
-        );
-
-        await updateConsultation(
-          consultationId,
-          {
-            transcript:data.text
-          }
-        );
-      }
+      );
 
     }
     catch(error){
@@ -433,7 +775,12 @@ export function ConsultationRoomPage(){
     }
     finally{
 
-      setTranscribing(false);
+      if(
+        pendingTranscriptionsRef.current === 0
+      ){
+
+        setTranscribing(false);
+      }
     }
 
   }
