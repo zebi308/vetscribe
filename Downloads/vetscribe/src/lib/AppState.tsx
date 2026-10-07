@@ -1143,41 +1143,52 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
   }
 
   async function approveConsultation(
-    id: string,
-    draft: ClinicalDraft,
-    reason?: string
-  ) {
-    const consultation = consultations.find((x) => x.id === id);
+  id: string,
+  draft: ClinicalDraft,
+  reason?: string
+) {
+  const consultation = consultations.find((x) => x.id === id);
 
-    if (!consultation) throw new Error("Consultation not found");
+  if (!consultation) throw new Error("Consultation not found");
 
-    const updated: Partial<Consultation> = {
-      status: "approved",
-      clinicalNote: draft,
-      approvedBy: currentUser?.id,
-      approvedAt: new Date().toISOString(),
-      version: (consultation.version || 0) + 1,
-    };
+  if (!supabase) return;
 
-    await updateConsultation(id, updated);
+  const approvalTime = new Date().toISOString();
+  const newVersion = (consultation.version || 0) + 1;
 
-    if (!supabase) return;
-
-    await supabase.from("clinical_notes").upsert({
+  // 1. Save clinical note + approval metadata first
+  const { error: noteError } = await supabase
+    .from("clinical_notes")
+    .upsert({
       consultation_id: id,
       structured_content: draft,
       approved_by: currentUser?.id,
-      approved_at: new Date().toISOString(),
-      version: (consultation.version || 0) + 1,
+      approved_at: approvalTime,
+      version: newVersion,
       change_reason: reason || null,
     });
 
-    await createAuditLog(
-      "Clinical note approved",
-      "CONSULTATION",
-      id
-    );
+  if (noteError) {
+    throw noteError;
   }
+
+  // 2. Now approve consultation
+  const updated: Partial<Consultation> = {
+    status: "approved",
+    clinicalNote: draft,
+    approvedBy: currentUser?.id,
+    approvedAt: approvalTime,
+    version: newVersion,
+  };
+
+  await updateConsultation(id, updated);
+
+  await createAuditLog(
+    "Clinical note approved",
+    "CONSULTATION",
+    id
+  );
+}
 
   async function archiveConsultation(id: string) {
     await updateConsultation(id, {
