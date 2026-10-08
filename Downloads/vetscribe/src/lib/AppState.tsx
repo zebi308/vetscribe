@@ -860,53 +860,33 @@ console.log(
     // Referral users receive additional 30 days later
     // =====================================================
 
-    const trialDays = 14 + (referralOwner ? 30 : 0);
+    // The database RPC validates the manager, selects Starter Monthly,
+    // and creates a 14-day trial (+30 referral days if applicable).
+    // Direct subscription inserts are blocked by subscription RLS.
+    try {
+      const { data: createdSubscriptionId, error: trialError } = await supabase.rpc(
+        "create_initial_trial",
+        {
+          p_practice_id: practiceData.id,
+          p_referral_code: referralOwner ? submittedReferralCode.trim() : null,
+        }
+      );
 
-    const trialStart = new Date();
-
-    const trialEnd = new Date();
-    trialEnd.setDate(trialEnd.getDate() + trialDays);
-
-    const { data: starterPlan, error: starterPlanError } = await supabase
-      .from("subscription_plans")
-      .select("id")
-      .eq("name", "Starter Monthly")
-      .eq("is_active", true)
-      .single();
-
-    if (starterPlanError || !starterPlan?.id) {
-      console.error("STARTER MONTHLY TRIAL PLAN LOOKUP ERROR:", starterPlanError);
-      throw new Error("Unable to set up your free trial. Please contact support.");
-    }
-
-    if (starterPlan?.id) {
-
-      try {
-        const createdSubscription = await createSubscription({
-          practice_id: practiceData.id,
-          plan_id: starterPlan.id,
-          status: "trialing",
-          start_date: trialStart.toISOString(),
-          trial_start: trialStart.toISOString(),
-          trial_end: trialEnd.toISOString(),
-trial_days: 14,
-referral_bonus_days: referralOwner ? 30 : 0,
-voucher_code: referralOwner ? submittedReferralCode.trim() : null,
-        });
-
-        console.log(
-          "INITIAL SUBSCRIPTION CREATED:",
-          createdSubscription
-        );
-
-      } catch (subscriptionError) {
-        console.error(
-          "INITIAL SUBSCRIPTION CREATION ERROR:",
-          subscriptionError
-        );
-
-        throw subscriptionError;
+      if (trialError) throw trialError;
+      if (!createdSubscriptionId) {
+        throw new Error("Initial subscription trial creation was not confirmed.");
       }
+
+      console.log(
+        "INITIAL SUBSCRIPTION CREATED:",
+        createdSubscriptionId
+      );
+    } catch (subscriptionError) {
+      console.error(
+        "INITIAL SUBSCRIPTION CREATION ERROR:",
+        subscriptionError
+      );
+      throw subscriptionError;
     }
 
 
