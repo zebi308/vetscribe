@@ -1,0 +1,2 @@
+[functions.customerio-event]
+verify_jwt = false
