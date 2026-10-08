@@ -115,11 +115,11 @@ search
 
 
 
-async function start(){
+async function start(patientId:string){
 
 
 
-if(!selected)
+if(!patientId || loading)
 
 return;
 
@@ -130,13 +130,15 @@ return;
 try{
 
 
+setSelected(patientId);
+
 setLoading(true);
 
 
 
 
 
-const consultationId = await createConsultation(selected);
+const consultationId = await createConsultation(patientId);
 
 console.log("CREATED CONSULTATION ID:", consultationId);
 
@@ -207,7 +209,7 @@ Start Consultation
 
 <p className="mt-2 text-slate-500">
 
-Select a patient to begin a new clinical consultation
+Find a patient below and click Start Consultation to begin a new clinical record
 
 </p>
 
@@ -282,7 +284,7 @@ e=>setSearch(e.target.value)
 
 
 
-<div className="mt-5 space-y-3">
+<div className="mt-6 space-y-4">
 
 
 
@@ -302,22 +304,22 @@ c=>c.id===patient.clientId
 
 
 
+const isStarting =
+
+loading && selected===patient.id;
+
+
+
 
 
 return (
 
 
 
-<button
+<div
 
 
 key={patient.id}
-
-
-type="button"
-
-
-onClick={()=>setSelected(patient.id)}
 
 
 className={`
@@ -325,16 +327,20 @@ className={`
 flex
 w-full
 items-center
-gap-3
-rounded-xl
+gap-4
+rounded-2xl
 border
-p-4
+border-slate-200
+bg-white
+px-5
+py-5
 text-left
+shadow-sm
 transition
 
 ${
 
-selected===patient.id
+isStarting
 
 ?
 
@@ -342,7 +348,7 @@ selected===patient.id
 
 :
 
-"hover:bg-slate-50"
+"hover:border-slate-300 hover:shadow-md"
 
 }
 
@@ -356,11 +362,13 @@ selected===patient.id
 
 <div className="
 grid
-h-10
-w-10
+h-12
+w-12
+shrink-0
 place-items-center
 rounded-full
-bg-slate-100
+bg-teal-50
+text-teal-700
 ">
 
 
@@ -376,10 +384,10 @@ bg-slate-100
 
 
 
-<div>
+<div className="min-w-0 flex-1">
 
 
-<p className="font-bold">
+<p className="truncate text-base font-bold text-slate-900">
 
 {patient.name}
 
@@ -387,7 +395,7 @@ bg-slate-100
 
 
 
-<p className="text-sm text-slate-500">
+<p className="mt-1 truncate text-sm text-slate-500">
 
 
 {patient.breed}
@@ -422,7 +430,68 @@ fullName(owner)
 
 
 
+
+
+
+
+<button
+
+
+type="button"
+
+
+disabled={loading}
+
+
+onClick={()=>start(patient.id)}
+
+
+className="
+shrink-0
+rounded-lg
+bg-[#2d6f69]
+px-5
+py-3
+text-sm
+font-semibold
+text-white
+shadow-sm
+transition
+hover:bg-[#245b56]
+focus:outline-none
+focus:ring-2
+focus:ring-[#2d6f69]/40
+focus:ring-offset-2
+disabled:cursor-not-allowed
+disabled:opacity-60
+"
+
+
+>
+
+
+{
+
+isStarting
+
+?
+
+"Starting..."
+
+:
+
+"Start Consultation"
+
+}
+
+
 </button>
+
+
+
+
+
+</div>
 
 
 
@@ -437,6 +506,24 @@ fullName(owner)
 
 
 
+
+
+{
+
+filtered.length===0 && (
+
+<div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+
+No patients found.
+
+</div>
+
+)
+
+}
+
+
+
 </div>
 
 
@@ -444,49 +531,6 @@ fullName(owner)
 
 
 </Card>
-
-
-
-
-
-
-
-
-
-<Button
-
-
-disabled={
-
-!selected || loading
-
-}
-
-
-onClick={start}
-
-
->
-
-
-
-{
-
-loading
-
-?
-
-"Starting..."
-
-:
-
-"Start Consultation"
-
-}
-
-
-
-</Button>
 
 
 

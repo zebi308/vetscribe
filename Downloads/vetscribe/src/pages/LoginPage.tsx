@@ -10,6 +10,7 @@ import {
 import logo from "../assets/Logoo.png";
 
 import { useAppState } from "../lib/AppState";
+import { supabase } from "../lib/supabase/client";
 import { useToast } from "../lib/ToastContext";
 
 
@@ -72,12 +73,34 @@ password
 
 if(success){
 
-showToast(
-"Welcome back!",
-"success"
-);
+// Newly created veterinarians must set their own password before
+// entering the application. Existing login and role logic is unchanged.
+if (!supabase) {
+  throw new Error("Authentication is not available.");
+}
 
-navigate("/dashboard");
+const { data: authData, error: authError } = await supabase.auth.getUser();
+if (authError || !authData.user) {
+  throw authError || new Error("Unable to verify your account.");
+}
+
+const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("role, must_change_password")
+  .eq("auth_user_id", authData.user.id)
+  .single();
+
+if (profileError || !profile) {
+  throw profileError || new Error("Unable to verify account security.");
+}
+
+if (profile.role === "vet" && profile.must_change_password === true) {
+  showToast("Please set a new password to secure your account.", "success");
+  navigate("/first-login-password", { replace: true });
+} else {
+  showToast("Welcome back!", "success");
+  navigate("/dashboard");
+}
 
 }
 

@@ -22,6 +22,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { FirstLoginPasswordPage } from "./pages/FirstLoginPasswordPage";
 
 
 // Dashboard Pages
@@ -154,6 +155,13 @@ element={<ForgotPasswordPage/>}
 
 
 
+
+
+{/* Mandatory first-login password setup for veterinarian accounts */}
+<Route
+  path="/first-login-password"
+  element={<FirstLoginPasswordPage />}
+/>
 
 
 {/* =====================

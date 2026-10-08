@@ -961,39 +961,35 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
       throw new Error(userLimit.message || "Veterinarian limit reached. Please upgrade your subscription.");
     }
 
-    const { data: userData, error: userError } =
-      await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
+    // Create staff through a trusted Edge Function so the Practice Manager's
+    // Supabase session is never replaced by the new veterinarian's session.
+    // The function must verify the caller's practice_manager role and practice,
+    // enforce staff limits server-side, and create the veterinarian profile with
+    // must_change_password=true. Do not fall back to auth.signUp here.
+    const { data: createdVet, error: createError } =
+      await supabase.functions.invoke("create-veterinarian", {
+        body: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          password: data.password,
+        },
       });
 
-    if (userError) throw userError;
-
-    if (!userData.user) {
-      throw new Error("No auth user returned");
+    if (createError) throw createError;
+    if (createdVet?.error) {
+      throw new Error(createdVet.error);
     }
-
-    const { error: profileError } =
-      await supabase
-        .from("profiles")
-        .insert({
-          auth_user_id: userData.user.id,
-          practice_id: practice.id,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          role: "vet",
-          is_active: true,
-        });
-
-    if (profileError) throw profileError;
+    if (!createdVet?.userId) {
+      throw new Error("Veterinarian creation was not confirmed by the server.");
+    }
 
     await loadAppData();
 
     await createAuditLog(
       "Veterinarian staff member created",
       "STAFF",
-      userData.user.id,
+      createdVet.userId,
       {
         staffName: `${data.firstName} ${data.lastName}`,
         role: "Veterinarian",

@@ -612,6 +612,10 @@ hover:bg-slate-100
       />
     </div>
 
+    <p className="mt-3 text-xs text-slate-500">
+      This is a temporary password. The veterinarian will be required to set a new password at first login.
+    </p>
+
     <div className="mt-4 flex gap-3">
       <button
         className="rounded-lg bg-teal-600 px-4 py-2 text-white"

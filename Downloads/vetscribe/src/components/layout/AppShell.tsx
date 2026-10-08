@@ -105,9 +105,38 @@ export function AppShell() {
   const {
     practice,
     currentUser,
+    subscriptions,
+    subscriptionPlans,
     logout
   } = useAppState();
 
+
+  // Use the same active/trialing subscription selection as SubscriptionPage.
+  const currentSubscription = subscriptions.find(
+    (item: any) =>
+      (item.practice_id === practice?.id ||
+        item.practiceId === practice?.id) &&
+      ["active", "trialing"].includes(item.status)
+  );
+
+  const currentPlan = subscriptionPlans.find(
+    (plan: any) => plan.id === currentSubscription?.plan_id
+  );
+
+  const billingCycle = String(currentPlan?.billing_cycle || "").toLowerCase();
+  const cycleLabel =
+    billingCycle === "month" || billingCycle === "monthly"
+      ? "Monthly"
+      : billingCycle === "year" || billingCycle === "yearly" || billingCycle === "annual"
+        ? "Annual"
+        : currentPlan?.billing_cycle || "";
+
+  const subscriptionLabel =
+    currentSubscription?.status === "trialing"
+      ? "Trial"
+      : currentPlan
+        ? `${currentPlan.name}${cycleLabel ? ` — ${cycleLabel}` : ""}`
+        : "No active plan";
 
   const location = useLocation();
 
@@ -134,10 +163,10 @@ export function AppShell() {
 
   return (
 
-    <div className="min-h-screen bg-slate-50 md:flex">
+    <div className="min-h-screen bg-slate-50 md:flex md:h-screen md:overflow-hidden">
 
 
-      <aside className="hidden w-64 border-r border-slate-200 bg-white md:flex md:flex-col">
+      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white md:flex md:h-screen md:flex-col md:overflow-hidden">
 
 
         <div className="border-b px-5 py-5">
@@ -167,7 +196,7 @@ export function AppShell() {
 
 
 
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
 
 
           {
@@ -221,7 +250,11 @@ export function AppShell() {
 
 
 
-        <div className="border-t p-4">
+        <div className="shrink-0 border-t p-4">
+
+          <p className="mb-3 text-sm font-semibold text-teal-700">
+            {subscriptionLabel}
+          </p>
 
           <p className="text-sm font-semibold text-slate-900">
             {currentUser?.firstName} {currentUser?.lastName}
@@ -252,7 +285,7 @@ export function AppShell() {
 
 
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 md:h-screen md:overflow-y-auto">
 
 
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-white/95 px-4 py-3 backdrop-blur md:px-8">

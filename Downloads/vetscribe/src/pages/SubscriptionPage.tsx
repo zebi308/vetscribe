@@ -2,6 +2,7 @@
 // Existing Stripe, voucher, trial, referral and usage logic preserved.
 
 import React, { useState } from "react";
+import { Check } from "lucide-react";
 import { useAppState } from "../lib/AppState";
 import { checkDowngradeStatus } from "../lib/services/subscriptionService";
 
@@ -322,26 +323,48 @@ const totalTrialDays =
 
 
 
+  const statusBadgeClass =
+    subscriptionStatus === "active"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : subscriptionStatus === "trialing"
+        ? "border-teal-200 bg-teal-50 text-teal-700"
+        : "border-red-200 bg-red-50 text-red-700";
+
+
+  const progressColor = (percentage:number) =>
+    percentage >= 100 ? "bg-red-500" : "bg-[#2d6f69]";
+
+
+  const aiUsed =
+    currentAIUsage?.ai_consultations_used || 0;
+
+  const aiPercentage =
+    currentPlan?.max_ai_consultations
+      ? Math.min((aiUsed / currentPlan.max_ai_consultations) * 100, 100)
+      : 0;
+
+
   return (
 
-    <div className="p-6 space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 p-6">
 
+
+      {/* HEADER */}
 
       <div>
 
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold text-slate-900">
           VetScribe Subscription
         </h1>
 
-
-        <p className="text-gray-500">
+        <div className="mt-1 text-sm text-slate-500">
           Manage your VetScribe subscription, usage and billing information.
-        </p>
+        </div>
 
         {new URLSearchParams(window.location.search).get("success") === "true" && (
-          <p className="mt-3 text-sm text-teal-700">
+          <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800">
             Payment received. Your subscription is being activated. Please wait a few seconds.
-          </p>
+          </div>
         )}
 
       </div>
@@ -352,135 +375,175 @@ const totalTrialDays =
 
       {/* CURRENT PLAN */}
 
-
-      <div className="rounded-xl border bg-white p-6">
-
-
-        <h2 className="mb-4 text-lg font-semibold">
-          Current Subscription
-        </h2>
-
-
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
 
         {
           currentPlan ? (
 
-            <div className="space-y-3">
+            <>
 
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-6">
 
-              <div className="text-2xl font-bold">
-                {currentPlan.name}
-              </div>
+                <div>
 
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Current Subscription
+                  </div>
 
+                  <div className="mt-1 text-2xl font-bold text-slate-900">
+                    {currentPlan.name}
+                  </div>
 
-              <div>
-                <p className="text-sm text-gray-500">Status</p>
-                <span className={`inline-block mt-1 rounded-full px-3 py-1 text-sm ${
-                  subscriptionStatus === "active" || subscriptionStatus === "trialing"
-                    ? "bg-green-50 text-green-700"
-                    : "bg-red-50 text-red-700"
-                }`}>
-                  {subscriptionStatus}
-                </span>
-              </div>
-
-              {isTrial && (
-  <div className="rounded-lg bg-teal-50 p-4 text-sm text-teal-900 space-y-2">
-
-    <p className="font-semibold text-base">
-      Free Trial
-    </p>
-
-    <p>
-      {standardTrialDays} days standard trial
-    </p>
-
-    {referralBonusDays > 0 && (
-      <p>
-        + {referralBonusDays} days referral bonus
-      </p>
-    )}
-
-    <div className="border-t border-teal-200 pt-2 font-bold">
-      {totalTrialDays} days total access
-    </div>
-
-    {trialEndDate && (
-      <p className="pt-1">
-        Trial ends: {trialEndDate}
-      </p>
-    )}
-
-    {daysRemaining !== null && (
-      <p>
-        Remaining: {daysRemaining} days
-      </p>
-    )}
-
-  </div>
-)}
-
-              {currentSubscription?.cancel_at_period_end && (
-                <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                  Your subscription will cancel at the end of the current billing period.
                 </div>
-              )}
 
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium capitalize ${statusBadgeClass}`}>
 
+                  <span className="h-2 w-2 rounded-full bg-current" />
 
+                  {subscriptionStatus}
 
-              <div>
-
-                Price:
-
-                <span className="ml-2">
-
-                  {currentPlan.price}
-                  {" "}
-                  {currentPlan.currency || "GBP"}
-                  /
-                  {currentPlan.billing_cycle}
-
-                </span>
+                </div>
 
               </div>
 
 
+              <div className="space-y-5 p-6">
+
+                <div className="grid gap-4 sm:grid-cols-2">
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+                    <div className="text-xs font-medium text-slate-500">
+                      Price
+                    </div>
+
+                    <div className="mt-1 text-lg font-semibold text-slate-900">
+                      {currentPlan.price}
+                      {" "}
+                      {currentPlan.currency || "GBP"}
+                      /
+                      {currentPlan.billing_cycle}
+                    </div>
+
+                  </div>
 
 
-              <div>
-  <p className="text-sm text-gray-500">
-    Renewal Date
-  </p>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
 
-  <span className="ml-2">
-    {
-      currentSubscription?.renewal_date
-        ? new Date(currentSubscription.renewal_date).toLocaleDateString()
-        : currentSubscription?.trial_end
-          ? new Date(currentSubscription.trial_end).toLocaleDateString()
-          : "-"
-    }
-  </span>
-</div>
+                    <div className="text-xs font-medium text-slate-500">
+                      Renewal Date
+                    </div>
+
+                    <div className="mt-1 text-lg font-semibold text-slate-900">
+                      {
+                        currentSubscription?.renewal_date
+                          ? new Date(currentSubscription.renewal_date).toLocaleDateString()
+                          : currentSubscription?.trial_end
+                            ? new Date(currentSubscription.trial_end).toLocaleDateString()
+                            : "-"
+                      }
+                    </div>
+
+                  </div>
+
+                </div>
 
 
+                {isTrial && (
 
-            </div>
+                  <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
 
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+
+                      <div className="text-base font-semibold text-teal-900">
+                        Free Trial
+                      </div>
+
+                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal-800">
+                        {totalTrialDays} days total access
+                      </div>
+
+                    </div>
+
+
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+
+                      <div className="rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-teal-800">
+                        {standardTrialDays} days standard trial
+                      </div>
+
+                      {referralBonusDays > 0 && (
+                        <div className="rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-teal-800">
+                          + {referralBonusDays} days referral bonus
+                        </div>
+                      )}
+
+                    </div>
+
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                      {trialEndDate && (
+                        <div className="rounded-lg bg-white p-3">
+
+                          <div className="text-xs font-medium text-teal-700">
+                            Trial ends
+                          </div>
+
+                          <div className="mt-1 font-semibold text-teal-900">
+                            {trialEndDate}
+                          </div>
+
+                        </div>
+                      )}
+
+                      {daysRemaining !== null && (
+                        <div className="rounded-lg bg-white p-3">
+
+                          <div className="text-xs font-medium text-teal-700">
+                            Remaining
+                          </div>
+
+                          <div className="mt-1 font-semibold text-teal-900">
+                            {daysRemaining} days
+                          </div>
+
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                )}
+
+
+                {currentSubscription?.cancel_at_period_end && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Your subscription will cancel at the end of the current billing period.
+                  </div>
+                )}
+
+              </div>
+
+            </>
 
           ) : (
 
+            <div className="p-6">
 
-            <p className="text-gray-500">
-              No active VetScribe subscription found.
-            </p>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Current Subscription
+              </div>
 
+              <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                No active VetScribe subscription found.
+              </div>
+
+            </div>
 
           )
         }
-
 
       </div>
 
@@ -488,32 +551,41 @@ const totalTrialDays =
 
 
 
-
       {
         downgradeStatus.exceeded && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 p-6">
-            <h2 className="text-lg font-semibold text-amber-900">
-              Plan limits exceeded
-            </h2>
 
-            <p className="mt-2 text-sm text-amber-800">
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6">
+
+            <div className="text-lg font-semibold text-amber-900">
+              Plan limits exceeded
+            </div>
+
+            <div className="mt-2 text-sm text-amber-800">
               Your current usage is above your new plan limits.
               Existing data remains safe.
               You cannot add more users or patients until your usage fits your plan.
-            </p>
+            </div>
 
             <div className="mt-4 space-y-2 text-sm text-amber-900">
               {
                 downgradeStatus.items.map((item:any,index:number)=>(
-                  <div key={index}>
+                  <div
+                    key={index}
+                    className="rounded-lg bg-white px-3 py-2"
+                  >
                     {item.type}: {item.current} / {item.limit}
                   </div>
                 ))
               }
             </div>
+
           </div>
+
         )
       }
+
+
+
 
 
       {/* AVAILABLE PLANS - PRACTICE MANAGER ONLY */}
@@ -521,13 +593,18 @@ const totalTrialDays =
       {
         isPracticeManager && (
 
-          <div className="rounded-xl border bg-white p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-            <h2 className="mb-5 text-lg font-semibold">
+            <div className="text-lg font-semibold text-slate-900">
               Available Plans
-            </h2>
+            </div>
 
-            <div className="mb-5 flex gap-3">
+            <div className="mt-1 text-sm text-slate-500">
+              Choose the plan that fits your practice. Apply a voucher first if you have one.
+            </div>
+
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
 
               <input
                 value={voucherCode}
@@ -536,13 +613,13 @@ const totalTrialDays =
                   setVoucherStatus(null);
                 }}
                 placeholder="Enter voucher code (optional)"
-                className="flex-1 rounded-lg border px-3 py-2"
+                className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-teal-500"
               />
 
               <button
                 onClick={validateVoucher}
                 disabled={voucherLoading}
-                className="rounded-lg bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+                className="rounded-xl bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
               >
                 {
                   voucherLoading
@@ -555,49 +632,68 @@ const totalTrialDays =
 
             {
               voucherStatus && (
-                <p className={
+                <div className={
                   voucherStatus.success
-                  ? "mb-5 text-sm text-green-600"
-                  : "mb-5 text-sm text-red-600"
+                  ? "mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                  : "mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
                 }>
                   {voucherStatus.success ? "✓ " : "✕ "}
                   {voucherStatus.message}
-                </p>
+                </div>
               )
             }
 
-            <div className="grid gap-5 md:grid-cols-2">
+
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
 
               {
                 subscriptionPlans.map((plan:any)=>(
 
                   <div
                     key={plan.id}
-                    className="rounded-xl border p-5"
+                    className={`flex flex-col rounded-2xl border p-6 transition hover:shadow-md ${
+                      plan.id === currentPlan?.id
+                        ? "border-[#2d6f69] bg-teal-50/40"
+                        : "border-slate-200 bg-white"
+                    }`}
                   >
 
-                    <h3 className="text-xl font-bold">
-                      {plan.name}
-                    </h3>
+                    <div className="flex items-start justify-between gap-3">
 
-                    <p className="mt-2 text-2xl font-bold">
+                      <div className="text-xl font-bold text-slate-900">
+                        {plan.name}
+                      </div>
+
+                      {plan.id === currentPlan?.id && (
+                        <div className="shrink-0 rounded-full bg-[#2d6f69] px-2.5 py-1 text-xs font-semibold text-white">
+                          Current plan
+                        </div>
+                      )}
+
+                    </div>
+
+                    <div className="mt-3 text-3xl font-bold text-slate-900">
                       £{plan.price}
-                      <span className="text-sm font-normal text-gray-500">
+                      <span className="text-sm font-normal text-slate-500">
                         /{plan.billing_cycle}
                       </span>
-                    </p>
+                    </div>
 
-                    <button
-                      disabled={checkoutLoading===plan.id}
-                      onClick={()=>startCheckout(plan.id)}
-                      className="mt-4 rounded-lg bg-teal-600 px-4 py-2 text-white disabled:opacity-50"
-                    >
-                      {
-                        checkoutLoading===plan.id
-                        ? "Opening checkout..."
-                        : "Choose Plan"
-                      }
-                    </button>
+                    <div className="mt-auto pt-5">
+
+                      <button
+                        disabled={checkoutLoading===plan.id}
+                        onClick={()=>startCheckout(plan.id)}
+                        className="w-full rounded-xl bg-[#2d6f69] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#245b56] disabled:opacity-60"
+                      >
+                        {
+                          checkoutLoading===plan.id
+                          ? "Opening checkout..."
+                          : "Choose Plan"
+                        }
+                      </button>
+
+                    </div>
 
                   </div>
 
@@ -612,142 +708,216 @@ const totalTrialDays =
       }
 
 
-      {/* USAGE */}
 
+
+
+      {/* USAGE (VETERINARIANS, PATIENTS, AI CONSULTATIONS) */}
 
       {
         currentPlan && (
 
-          <div className="rounded-xl border bg-white p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-
-            <h2 className="mb-5 text-lg font-semibold">
+            <div className="text-lg font-semibold text-slate-900">
               Usage Overview
-            </h2>
+            </div>
+
+            <div className="mt-1 text-sm text-slate-500">
+              Your usage against the limits of your current plan.
+            </div>
 
 
-
-            <div className="grid gap-5 md:grid-cols-2">
-
-
-              <div className="rounded-lg border p-4">
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
 
 
-                <p className="text-sm text-gray-500">
+              {/* VETERINARIANS */}
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+
+                <div className="text-xs font-medium text-slate-500">
                   Veterinarians
-                </p>
+                </div>
 
-
-                <p className="mt-1 text-2xl font-bold">
+                <div className="mt-1 text-2xl font-bold text-slate-900">
 
                   {currentUsers}
 
-                  <span className="text-gray-400 text-lg">
-                    /
+                  <span className="text-lg font-semibold text-slate-400">
+                    {" / "}
                     {userLimit || "Unlimited"}
                   </span>
 
-                </p>
-
-
+                </div>
 
                 {
                   userLimit && (
 
                     <>
 
-                    <div className="mt-3 h-2 rounded-full bg-gray-200">
+                      <div className="mt-3 h-2 rounded-full bg-slate-200">
 
-                      <div
-                        className="h-2 rounded-full bg-teal-600"
-                        style={{
-                          width:`${userPercentage}%`
-                        }}
-                      />
+                        <div
+                          className={`h-2 rounded-full ${progressColor(userPercentage)}`}
+                          style={{
+                            width:`${userPercentage}%`
+                          }}
+                        />
 
-                    </div>
+                      </div>
 
-
-                    {
-                      getUsageMessage(
-                        currentUsers,
-                        userLimit,
-                        "Veterinarian"
-                      )
-                    }
-
+                      {
+                        getUsageMessage(
+                          currentUsers,
+                          userLimit,
+                          "Veterinarian"
+                        )
+                      }
 
                     </>
 
                   )
                 }
 
-
               </div>
 
 
+              {/* PATIENTS */}
 
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
 
-
-              <div className="rounded-lg border p-4">
-
-
-                <p className="text-sm text-gray-500">
+                <div className="text-xs font-medium text-slate-500">
                   Patients
-                </p>
+                </div>
 
-
-                <p className="mt-1 text-2xl font-bold">
+                <div className="mt-1 text-2xl font-bold text-slate-900">
 
                   {currentPatients}
 
-                  <span className="text-gray-400 text-lg">
-                    /
+                  <span className="text-lg font-semibold text-slate-400">
+                    {" / "}
                     {patientLimit || "Unlimited"}
                   </span>
 
-                </p>
-
-
+                </div>
 
                 {
                   patientLimit && (
 
                     <>
 
-                    <div className="mt-3 h-2 rounded-full bg-gray-200">
+                      <div className="mt-3 h-2 rounded-full bg-slate-200">
 
-                      <div
-                        className="h-2 rounded-full bg-teal-600"
-                        style={{
-                          width:`${patientPercentage}%`
-                        }}
-                      />
+                        <div
+                          className={`h-2 rounded-full ${progressColor(patientPercentage)}`}
+                          style={{
+                            width:`${patientPercentage}%`
+                          }}
+                        />
 
-                    </div>
+                      </div>
 
-
-                    {
-                      getUsageMessage(
-                        currentPatients,
-                        patientLimit,
-                        "Patient"
-                      )
-                    }
-
+                      {
+                        getUsageMessage(
+                          currentPatients,
+                          patientLimit,
+                          "Patient"
+                        )
+                      }
 
                     </>
 
                   )
                 }
 
+              </div>
+
+
+              {/* AI CONSULTATIONS */}
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+
+                <div className="text-xs font-medium text-slate-500">
+                  AI Consultations
+                </div>
+
+                <div className="mt-1 text-2xl font-bold text-slate-900">
+
+                  {
+                    currentPlan.max_ai_consultations
+                      ? aiUsed
+                      : "Unlimited"
+                  }
+
+                  {
+                    currentPlan.max_ai_consultations && (
+
+                      <span className="text-lg font-semibold text-slate-400">
+                        {" / "}
+                        {currentPlan.max_ai_consultations}
+                      </span>
+
+                    )
+                  }
+
+                </div>
+
+                {
+                  currentPlan.max_ai_consultations && (
+
+                    <>
+
+                      <div className="mt-3 h-2 rounded-full bg-slate-200">
+
+                        <div
+                          className={`h-2 rounded-full ${progressColor(aiPercentage)}`}
+                          style={{
+                            width:`${aiPercentage}%`
+                          }}
+                        />
+
+                      </div>
+
+                      {
+                        aiUsed >= currentPlan.max_ai_consultations
+
+                        ?
+
+                        <div className="mt-2 text-sm text-red-600">
+                          AI consultation limit reached. Upgrade your VetScribe plan to continue.
+                        </div>
+
+                        :
+
+                        <div className="mt-2 text-sm text-slate-600">
+                          {
+                            currentPlan.max_ai_consultations -
+                            aiUsed
+                          }
+                          {" "}
+                          AI consultations remaining this billing period.
+                        </div>
+
+                      }
+
+                    </>
+
+                  )
+                }
+
+                {
+                  !currentPlan.max_ai_consultations && (
+
+                    <div className="mt-2 text-sm text-emerald-600">
+                      Unlimited AI consultations included in your Practice Plus plan.
+                    </div>
+
+                  )
+                }
 
               </div>
 
 
-
             </div>
-
 
           </div>
 
@@ -756,196 +926,64 @@ const totalTrialDays =
 
 
 
-
-
-{/* AI USAGE */}
-
-{
-  currentPlan && (
-
-    <div className="rounded-xl border bg-white p-6">
-
-      <h2 className="mb-5 text-lg font-semibold">
-        AI Usage
-      </h2>
-
-
-      <div className="rounded-lg border p-4">
-
-
-        <p className="text-sm text-gray-500">
-          AI Consultations
-        </p>
-
-
-        <p className="mt-1 text-2xl font-bold">
-
-          {
-            currentPlan.max_ai_consultations
-              ? currentAIUsage?.ai_consultations_used || 0
-              : "Unlimited"
-          }
-
-
-          {
-            currentPlan.max_ai_consultations && (
-
-              <span className="text-gray-400 text-lg">
-
-                {" / "}
-                {currentPlan.max_ai_consultations}
-
-              </span>
-
-            )
-          }
-
-        </p>
-
-
-
-        {
-          currentPlan.max_ai_consultations && (
-
-            <>
-
-              <div className="mt-3 h-2 rounded-full bg-gray-200">
-
-
-                <div
-
-                  className="h-2 rounded-full bg-teal-600"
-
-                  style={{
-                    width:`${
-                      Math.min(
-                        (
-                          ((currentAIUsage?.ai_consultations_used || 0)
-                          /
-                          currentPlan.max_ai_consultations)
-                          *100
-                        ),
-                        100
-                      )
-                    }%`
-                  }}
-
-                />
-
-
-              </div>
-
-
-
-              {
-                (currentAIUsage?.ai_consultations_used || 0)
-                >= currentPlan.max_ai_consultations
-
-                ?
-
-                <p className="mt-2 text-sm text-red-600">
-
-                  AI consultation limit reached. Upgrade your VetScribe plan to continue.
-
-                </p>
-
-
-                :
-
-                <p className="mt-2 text-sm text-gray-600">
-
-                  {
-                    currentPlan.max_ai_consultations -
-                    (currentAIUsage?.ai_consultations_used || 0)
-                  }
-                  {" "}
-                  AI consultations remaining this billing period.
-
-                </p>
-
-              }
-
-
-            </>
-
-          )
-        }
-
-
-
-        {
-          !currentPlan.max_ai_consultations && (
-
-            <p className="mt-2 text-sm text-green-600">
-
-              Unlimited AI consultations included in your Practice Plus plan.
-
-            </p>
-
-          )
-        }
-
-
-
-      </div>
-
-
-    </div>
-
-  )
-}
 
 
       {/* FEATURES */}
 
-
       {
         currentPlan?.features && (
 
-          <div className="rounded-xl border bg-white p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-
-            <h2 className="mb-4 text-lg font-semibold">
+            <div className="text-lg font-semibold text-slate-900">
               Included Features
-            </h2>
-
-
-            <div className="space-y-2">
-
-
-              {
-                Array.isArray(currentPlan.features)
-
-                ?
-
-                currentPlan.features.map(
-                  (feature:string,index:number)=>(
-
-                    <div key={index}>
-                      ✓ {feature}
-                    </div>
-
-                  )
-                )
-
-                :
-
-                <div>
-                  {JSON.stringify(currentPlan.features)}
-                </div>
-
-              }
-
-
             </div>
 
+
+            {
+              Array.isArray(currentPlan.features)
+
+              ?
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                {
+                  currentPlan.features.map(
+                    (feature:string,index:number)=>(
+
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                      >
+
+                        <div className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-700">
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+
+                        <div>
+                          {feature}
+                        </div>
+
+                      </div>
+
+                    )
+                  )
+                }
+
+              </div>
+
+              :
+
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                {JSON.stringify(currentPlan.features)}
+              </div>
+
+            }
 
           </div>
 
         )
       }
-
-
 
 
 
@@ -953,14 +991,11 @@ const totalTrialDays =
 
       {/* INVOICES */}
 
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-      <div className="rounded-xl border bg-white p-6">
-
-
-        <h2 className="mb-4 text-lg font-semibold">
+        <div className="text-lg font-semibold text-slate-900">
           Invoice History
-        </h2>
-
+        </div>
 
 
         {
@@ -968,15 +1003,13 @@ const totalTrialDays =
 
           ?
 
-          <p className="text-gray-500">
+          <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
             No invoices available.
-          </p>
-
+          </div>
 
           :
 
-          <div className="space-y-3">
-
+          <div className="mt-4 space-y-3">
 
             {
               practiceInvoices.map(
@@ -984,34 +1017,30 @@ const totalTrialDays =
 
                   <div
                     key={invoice.id}
-                    className="rounded-lg border p-4 flex justify-between"
+                    className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3"
                   >
 
                     <div>
 
-                      <p className="font-semibold">
+                      <div className="font-semibold text-slate-900">
                         {invoice.invoice_number}
-                      </p>
+                      </div>
 
-
-                      <p className="text-sm text-gray-500">
-
+                      <div className="mt-0.5 text-sm text-slate-500">
                         {invoice.currency}
                         {" "}
                         {invoice.amount}
-
-                      </p>
-
+                      </div>
 
                     </div>
 
-
-                    <div className="text-sm">
-
+                    <div className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                      invoice.status === "paid"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}>
                       {invoice.status}
-
                     </div>
-
 
                   </div>
 
@@ -1019,15 +1048,11 @@ const totalTrialDays =
               )
             }
 
-
           </div>
 
         }
 
-
       </div>
-
-
 
 
 
@@ -1035,15 +1060,11 @@ const totalTrialDays =
 
       {/* PAYMENTS */}
 
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-
-      <div className="rounded-xl border bg-white p-6">
-
-
-        <h2 className="mb-4 text-lg font-semibold">
+        <div className="text-lg font-semibold text-slate-900">
           Payment History
-        </h2>
-
+        </div>
 
 
         {
@@ -1051,15 +1072,13 @@ const totalTrialDays =
 
           ?
 
-          <p className="text-gray-500">
+          <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
             No payments available.
-          </p>
-
+          </div>
 
           :
 
-          <div className="space-y-3">
-
+          <div className="mt-4 space-y-3">
 
             {
               practicePayments.map(
@@ -1067,33 +1086,24 @@ const totalTrialDays =
 
                   <div
                     key={payment.id}
-                    className="rounded-lg border p-4 flex justify-between"
+                    className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3"
                   >
 
-
                     <div>
 
-                      <p className="font-medium">
+                      <div className="font-medium text-slate-900">
                         Payment
-                      </p>
+                      </div>
 
-
-                      <p className="text-sm text-gray-500">
-
+                      <div className="mt-0.5 text-sm capitalize text-slate-500">
                         {payment.payment_method}
-
-                      </p>
-
+                      </div>
 
                     </div>
 
-
-                    <div>
-
+                    <div className="font-semibold text-slate-900">
                       {payment.amount}
-
                     </div>
-
 
                   </div>
 
@@ -1101,15 +1111,11 @@ const totalTrialDays =
               )
             }
 
-
           </div>
 
         }
 
-
       </div>
-
-
 
 
     </div>
