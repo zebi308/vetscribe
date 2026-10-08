@@ -867,12 +867,17 @@ console.log(
     const trialEnd = new Date();
     trialEnd.setDate(trialEnd.getDate() + trialDays);
 
-    const { data: starterPlan } = await supabase
+    const { data: starterPlan, error: starterPlanError } = await supabase
       .from("subscription_plans")
       .select("id")
-      .eq("name", "Starter")
+      .eq("name", "Starter Monthly")
+      .eq("is_active", true)
       .single();
 
+    if (starterPlanError || !starterPlan?.id) {
+      console.error("STARTER MONTHLY TRIAL PLAN LOOKUP ERROR:", starterPlanError);
+      throw new Error("Unable to set up your free trial. Please contact support.");
+    }
 
     if (starterPlan?.id) {
 
