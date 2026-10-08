@@ -2403,8 +2403,6 @@ const response =
 
             <div className="mt-6 space-y-5">
 
-              {renderMissingInformation()}
-
               {renderAIInsights()}
 
               {/* SUBJECTIVE */}
@@ -2674,13 +2672,34 @@ const response =
                     Diagnostic Tests
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {
-                      displayValue(
-                        draft.objective?.diagnostic_tests
-                      )
-                    }
-                  </p>
+                  <div className="mt-2 space-y-2">
+  {(draft.objective?.diagnostic_tests ?? []).length > 0 ? (
+    (draft.objective?.diagnostic_tests ?? []).map((t: any, i: number) => (
+      <div
+        key={i}
+        className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-semibold text-slate-900">
+            {typeof t === "string" ? t : t.test}
+          </span>
+
+          {typeof t !== "string" && t.status && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium capitalize text-emerald-700">
+              {t.status}
+            </span>
+          )}
+        </div>
+
+        {typeof t !== "string" && t.result && (
+          <p className="mt-1 leading-6 text-slate-600">{t.result}</p>
+        )}
+      </div>
+    ))
+  ) : (
+    <p className="text-sm text-slate-500">No diagnostic tests recorded.</p>
+  )}
+</div>
 
                 </div>
 
@@ -2886,6 +2905,10 @@ const response =
                 </div>
 
               </div>
+
+              {/* INFORMATION REQUIRING REVIEW */}
+
+              {renderMissingInformation()}
 
               {/* AI CONFIDENCE */}
 
