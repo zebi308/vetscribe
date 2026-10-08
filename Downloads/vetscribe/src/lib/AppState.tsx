@@ -1129,12 +1129,24 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
     if (!supabase) return;
 
-    await supabase.from("clinical_notes").upsert({
-      consultation_id: id,
-      structured_content: draft,
-      clinical_quality: clinicalQuality || null,
-      version: consultation.version || 0,
-    });
+    const { error: draftError } = await supabase
+      .from("clinical_notes")
+      .upsert(
+        {
+          consultation_id: id,
+          practice_id: consultation.practiceId,
+          patient_id: consultation.patientId,
+          structured_content: draft,
+          clinical_quality: clinicalQuality || null,
+          version: consultation.version || 0,
+        },
+        { onConflict: "consultation_id" }
+      );
+
+    if (draftError) {
+      console.error("SAVE DRAFT ERROR:", draftError);
+      throw draftError;
+    }
 
     await createAuditLog(
       "Clinical note edited",
@@ -1164,13 +1176,18 @@ console.log("APPROVAL DATA", {
     const { error: noteError } = await supabase
     
       .from("clinical_notes")
-      .upsert({
-        consultation_id: id,
-        structured_content: draft,
-        approved_by: currentUser?.id,
-        approved_at: approvalTime,
-        version: newVersion,
-      });
+      .upsert(
+        {
+          consultation_id: id,
+          practice_id: consultation.practiceId,
+          patient_id: consultation.patientId,
+          structured_content: draft,
+          approved_by: currentUser?.id,
+          approved_at: approvalTime,
+          version: newVersion,
+        },
+        { onConflict: "consultation_id" }
+      );
 
     if (noteError) {
       console.error("CLINICAL NOTE APPROVAL ERROR:", noteError);
