@@ -1116,6 +1116,48 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
     );
   }
 
+  // Maps the structured draft onto the typed clinical_notes columns that the
+  // database approval trigger (validate_approval) reads.
+  function noteToText(value: any): string {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) {
+      return value.map(noteToText).filter((x) => x.trim() !== "").join("\n");
+    }
+    if (typeof value === "object") {
+      return Object.values(value)
+        .map(noteToText)
+        .filter((x) => x.trim() !== "")
+        .join("\n");
+    }
+    return String(value);
+  }
+
+  function noteToArray(value: any): any[] {
+    if (Array.isArray(value)) return value;
+    if (value === null || value === undefined || value === "") return [];
+    if (typeof value === "string") return value.trim() ? [value] : [];
+    return [value];
+  }
+
+  function buildClinicalNoteColumns(draft: ClinicalDraft) {
+    const d: any = draft || {};
+    const soap: any = d.soap || d;
+
+    return {
+      objective: noteToText(
+        soap.objective ?? d.objective ?? d.findings ?? d.clinicalFindings
+      ),
+      assessment: noteToText(soap.assessment ?? d.assessment),
+      plan: noteToText(soap.plan ?? d.plan),
+      diagnoses: noteToArray(d.diagnoses ?? soap.diagnoses),
+      differentials: noteToArray(d.differentials ?? soap.differentials),
+      treatment_given: noteToArray(
+        d.treatmentGiven ?? d.treatment_given ?? soap.treatmentGiven
+      ),
+    };
+  }
+
   async function saveDraft(id: string, draft: ClinicalDraft, clinicalQuality?: any) {
     const consultation = consultations.find((x) => x.id === id);
 
@@ -1137,6 +1179,7 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
           practice_id: consultation.practiceId,
           patient_id: consultation.patientId,
           structured_content: draft,
+          ...buildClinicalNoteColumns(draft),
           clinical_quality: clinicalQuality || null,
           version: consultation.version || 0,
         },
@@ -1182,6 +1225,7 @@ console.log("APPROVAL DATA", {
           practice_id: consultation.practiceId,
           patient_id: consultation.patientId,
           structured_content: draft,
+          ...buildClinicalNoteColumns(draft),
           approved_by: currentUser?.id,
           approved_at: approvalTime,
           version: newVersion,
