@@ -1142,19 +1142,89 @@ voucher_code: referralOwner ? submittedReferralCode.trim() : null,
 
   function buildClinicalNoteColumns(draft: ClinicalDraft) {
     const d: any = draft || {};
-    const soap: any = d.soap || d;
+
+    const asObject = (value: any) =>
+      value && typeof value === "object" && !Array.isArray(value) ? value : {};
+
+    const objectiveSection: any = asObject(d.objective);
+    const assessmentSection: any = asObject(d.assessment);
+    const planSection: any = asObject(d.plan);
+
+    // Objective: clinical findings + vital parameters + diagnostic tests
+    const vitals = noteToArray(objectiveSection.vital_parameters).map(
+      (v: any) =>
+        v && typeof v === "object" && v.name
+          ? `${v.name}: ${v.value ?? ""}`.trim()
+          : noteToText(v)
+    );
+
+    const tests = noteToArray(objectiveSection.diagnostic_tests).map(
+      (t: any) =>
+        t && typeof t === "object" && t.test
+          ? `${t.test}${t.result ? `: ${t.result}` : ""}`
+          : noteToText(t)
+    );
+
+    const objective = [
+      typeof d.objective === "string"
+        ? d.objective
+        : noteToText(
+            objectiveSection.clinical_findings ??
+              objectiveSection.clinicalFindings ??
+              objectiveSection.findings ??
+              d.findings ??
+              d.clinicalFindings
+          ),
+      ...vitals,
+      ...tests,
+    ]
+      .map((x) => noteToText(x).trim())
+      .filter((x) => x !== "")
+      .join("\n");
+
+    // Assessment
+    const assessment = noteToText(
+      typeof d.assessment === "string"
+        ? d.assessment
+        : assessmentSection.primary_assessment ??
+            assessmentSection.primaryAssessment
+    );
+
+    const diagnoses = noteToArray(
+      assessmentSection.diagnoses ?? d.diagnoses
+    );
+
+    const differentials = noteToArray(
+      assessmentSection.differentials ?? d.differentials
+    );
+
+    // Plan: client advice, follow up, medications as text
+    const plan = [
+      typeof d.plan === "string" ? d.plan : "",
+      planSection.client_advice,
+      planSection.follow_up,
+      ...noteToArray(planSection.medications).map((m: any) =>
+        noteToText(m)
+      ),
+    ]
+      .map((x) => noteToText(x).trim())
+      .filter((x) => x !== "")
+      .join("\n");
+
+    const treatmentGiven = noteToArray(
+      planSection.treatment_given ??
+        planSection.treatmentGiven ??
+        d.treatmentGiven ??
+        d.treatment_given
+    );
 
     return {
-      objective: noteToText(
-        soap.objective ?? d.objective ?? d.findings ?? d.clinicalFindings
-      ),
-      assessment: noteToText(soap.assessment ?? d.assessment),
-      plan: noteToText(soap.plan ?? d.plan),
-      diagnoses: noteToArray(d.diagnoses ?? soap.diagnoses),
-      differentials: noteToArray(d.differentials ?? soap.differentials),
-      treatment_given: noteToArray(
-        d.treatmentGiven ?? d.treatment_given ?? soap.treatmentGiven
-      ),
+      objective,
+      assessment,
+      plan,
+      diagnoses,
+      differentials,
+      treatment_given: treatmentGiven,
     };
   }
 
@@ -1215,6 +1285,10 @@ console.log("APPROVAL DATA", {
   consultationId: id,
   consultationPractice: consultation.practiceId,
   consultationPatient: consultation.patientId,
+});
+console.log("APPROVAL NOTE PAYLOAD", {
+  draft,
+  columns: buildClinicalNoteColumns(draft),
 });
     const { error: noteError } = await supabase
     
