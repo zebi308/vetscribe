@@ -2452,12 +2452,12 @@ const response =
                         )
                         : (
 
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                          <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                             {
                               draft.subjective?.presenting_complaint ||
                               "Not specified"
                             }
-                          </p>
+                          </div>
 
                         )
                     }
@@ -2493,12 +2493,12 @@ const response =
                         )
                         : (
 
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                          <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                             {
                               draft.subjective?.history ||
                               "Not specified"
                             }
-                          </p>
+                          </div>
 
                         )
                     }
@@ -2534,12 +2534,12 @@ const response =
                         )
                         : (
 
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                          <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                             {
                               draft.subjective?.owner_observations ||
                               "Not specified"
                             }
-                          </p>
+                          </div>
 
                         )
                     }
@@ -2595,12 +2595,12 @@ const response =
                       )
                       : (
 
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                        <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                           {
                             draft.objective?.clinical_findings ||
                             "No examination findings recorded."
                           }
-                        </p>
+                        </div>
 
                       )
                   }
@@ -2631,20 +2631,20 @@ const response =
                                   className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                                 >
 
-                                  <p className="text-xs font-medium text-slate-500">
+                                  <div className="text-xs font-medium text-slate-500">
                                     {
                                       item.name ||
                                       item.parameter ||
                                       "Parameter"
                                     }
-                                  </p>
+                                  </div>
 
-                                  <p className="mt-1 font-semibold text-slate-900">
+                                  <div className="mt-1 font-semibold text-slate-900">
                                     {
                                       item.value ||
                                       "Not recorded"
                                     }
-                                  </p>
+                                  </div>
 
                                 </div>
 
@@ -2657,9 +2657,9 @@ const response =
                       )
                       : (
 
-                        <p className="mt-2 text-sm text-slate-500">
+                        <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
                           No vital parameters recorded.
-                        </p>
+                        </div>
 
                       )
                   }
@@ -2692,12 +2692,12 @@ const response =
         </div>
 
         {typeof t !== "string" && t.result && (
-          <p className="mt-1 leading-6 text-slate-600">{t.result}</p>
+          <div className="mt-1 leading-6 text-slate-600">{t.result}</div>
         )}
       </div>
     ))
   ) : (
-    <p className="text-sm text-slate-500">No diagnostic tests recorded.</p>
+    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">No diagnostic tests recorded.</div>
   )}
 </div>
 
@@ -2750,12 +2750,12 @@ const response =
                       )
                       : (
 
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                        <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
                           {
                             draft.assessment?.primary_assessment ||
                             "Pending veterinarian assessment."
                           }
-                        </p>
+                        </div>
 
                       )
                   }
@@ -2768,13 +2768,48 @@ const response =
                     Diagnoses
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {
-                      displayValue(
-                        draft.assessment?.diagnoses
-                      )
+                  {
+                      Array.isArray(draft.assessment?.diagnoses) &&
+                      draft.assessment?.diagnoses.length > 0
+                        ? (
+
+                          <div className="mt-2 space-y-2">
+
+                            {
+                              draft.assessment?.diagnoses.map(
+                                (item:any,index:number) => (
+
+                                  <div
+                                    key={index}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700"
+                                  >
+                                    {
+                                      typeof item === "string"
+                                        ? item
+                                        : (
+                                          item?.name ||
+                                          item?.diagnosis ||
+                                          item?.treatment ||
+                                          displayValue(item)
+                                        )
+                                    }
+                                  </div>
+
+                                )
+                              )
+                            }
+
+                          </div>
+
+                        )
+                        : (
+
+                          <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                            Not specified
+                          </div>
+
+                        )
                     }
-                  </p>
 
                 </div>
 
@@ -2784,13 +2819,48 @@ const response =
                     Differentials
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {
-                      displayValue(
-                        draft.assessment?.differentials
-                      )
+                  {
+                      Array.isArray(draft.assessment?.differentials) &&
+                      draft.assessment?.differentials.length > 0
+                        ? (
+
+                          <div className="mt-2 space-y-2">
+
+                            {
+                              draft.assessment?.differentials.map(
+                                (item:any,index:number) => (
+
+                                  <div
+                                    key={index}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700"
+                                  >
+                                    {
+                                      typeof item === "string"
+                                        ? item
+                                        : (
+                                          item?.name ||
+                                          item?.diagnosis ||
+                                          item?.treatment ||
+                                          displayValue(item)
+                                        )
+                                    }
+                                  </div>
+
+                                )
+                              )
+                            }
+
+                          </div>
+
+                        )
+                        : (
+
+                          <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                            Not specified
+                          </div>
+
+                        )
                     }
-                  </p>
 
                 </div>
 
@@ -2820,13 +2890,48 @@ const response =
                       Treatment
                     </p>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {
-                        displayValue(
-                          draft.plan?.treatment_given
+                    {
+                      Array.isArray(draft.plan?.treatment_given) &&
+                      draft.plan?.treatment_given.length > 0
+                        ? (
+
+                          <div className="mt-2 space-y-2">
+
+                            {
+                              draft.plan?.treatment_given.map(
+                                (item:any,index:number) => (
+
+                                  <div
+                                    key={index}
+                                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"
+                                  >
+                                    {
+                                      typeof item === "string"
+                                        ? item
+                                        : (
+                                          item?.name ||
+                                          item?.diagnosis ||
+                                          item?.treatment ||
+                                          displayValue(item)
+                                        )
+                                    }
+                                  </div>
+
+                                )
+                              )
+                            }
+
+                          </div>
+
                         )
-                      }
-                    </p>
+                        : (
+
+                          <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                            Not specified
+                          </div>
+
+                        )
+                    }
 
                   </div>
 
@@ -2836,13 +2941,84 @@ const response =
                       Medications
                     </p>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {
-                        displayValue(
-                          draft.plan?.medications
+                    {
+                      Array.isArray(draft.plan?.medications) &&
+                      draft.plan.medications.length > 0
+                        ? (
+
+                          <div className="mt-2 space-y-3">
+
+                            {
+                              draft.plan.medications.map(
+                                (med:any,index:number) => (
+
+                                  <div
+                                    key={index}
+                                    className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                  >
+
+                                    <div className="font-semibold text-slate-900">
+                                      {
+                                        typeof med === "string"
+                                          ? med
+                                          : (med?.name || "Medication")
+                                      }
+                                    </div>
+
+                                    {
+                                      typeof med !== "string" && (
+
+                                        <div className="mt-3 flex flex-wrap gap-2">
+
+                                          {
+                                            [
+                                              ["Dose", med?.dose],
+                                              ["Route", med?.route],
+                                              ["Frequency", med?.frequency],
+                                              ["Duration", med?.duration],
+                                            ]
+                                              .filter(
+                                                (entry:any) => entry[1]
+                                              )
+                                              .map(
+                                                (entry:any) => (
+
+                                                  <div
+                                                    key={entry[0]}
+                                                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600"
+                                                  >
+                                                    <span className="font-semibold text-slate-700">
+                                                      {entry[0]}:
+                                                    </span>{" "}
+                                                    {entry[1]}
+                                                  </div>
+
+                                                )
+                                              )
+                                          }
+
+                                        </div>
+
+                                      )
+                                    }
+
+                                  </div>
+
+                                )
+                              )
+                            }
+
+                          </div>
+
                         )
-                      }
-                    </p>
+                        : (
+
+                          <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                            Not specified
+                          </div>
+
+                        )
+                    }
 
                   </div>
 
@@ -2877,12 +3053,12 @@ const response =
                       )
                       : (
 
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                        <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                           {
                             draft.plan?.follow_up ||
                             "Not specified."
                           }
-                        </p>
+                        </div>
 
                       )
                   }
@@ -2895,12 +3071,12 @@ const response =
                     Client Advice
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <div className="mt-2 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                     {
                       draft.plan?.client_advice ||
                       "Not specified."
                     }
-                  </p>
+                  </div>
 
                 </div>
 
