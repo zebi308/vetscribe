@@ -1337,10 +1337,10 @@ console.log("APPROVAL NOTE PAYLOAD", {
       patient_id: summary.patientId,
       client_id: summary.clientId,
       summary_text:
-  summary.summaryText ||
-  (summary as any).summary ||
-  (summary as any).text ||
-  JSON.stringify(summary),
+        (summary as any).summaryText ||
+        (summary as any).summary ||
+        (summary as any).text ||
+        JSON.stringify(summary),
       structured_content: summary,
       generated_at: summary.generatedAt,
       generated_by: summary.generatedBy
