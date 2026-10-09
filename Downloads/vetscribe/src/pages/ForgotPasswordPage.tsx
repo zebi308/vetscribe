@@ -59,12 +59,14 @@ return;
 
 
 
-const {
-error
-}=await supabase.auth.resetPasswordForEmail(email, {
+if (!supabase) {
+  showToast("Authentication service is unavailable. Please try again.", "error");
+  return;
+}
+
+const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
   redirectTo: `${window.location.origin}/reset-password`,
 });
-
 
 
 if(error){
