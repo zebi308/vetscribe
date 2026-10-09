@@ -23,7 +23,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { FirstLoginPasswordPage } from "./pages/FirstLoginPasswordPage";
-
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 // Dashboard Pages
 
@@ -119,6 +119,7 @@ element={<LoginPage/>}
 
 />
 
+<Route path="/reset-password" element={<ResetPasswordPage />} />
 
 
 <Route
@@ -163,6 +164,7 @@ element={<ForgotPasswordPage/>}
   element={<FirstLoginPasswordPage />}
 />
 
+  
 
 {/* =====================
         PROTECTED APP

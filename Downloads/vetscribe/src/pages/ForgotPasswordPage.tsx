@@ -7,11 +7,17 @@ import {
   ArrowLeft
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import {
+  Link
+} from "react-router-dom";
 
 import {
   useToast
 } from "../lib/ToastContext";
+
+import {
+  supabase
+} from "../lib/supabase";
 
 
 
@@ -40,24 +46,59 @@ setLoading(true);
 try{
 
 
+if(!email.trim()){
+
 showToast(
-"Password reset link sent.",
+"Please enter your email address.",
+"error"
+);
+
+return;
+
+}
+
+
+
+const {
+error
+}=await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: `${window.location.origin}/reset-password`,
+});
+
+
+
+if(error){
+
+throw error;
+
+}
+
+
+
+showToast(
+"Password reset link sent. Please check your email.",
 "success"
 );
 
 
+
 }
 
-catch(error){
+catch(error:any){
 
 
-console.error(error);
+console.error(
+"Password reset error:",
+error
+);
+
 
 
 showToast(
-"Unable to send reset email.",
+error?.message || "Unable to send reset email.",
 "error"
 );
+
 
 
 }
@@ -69,6 +110,7 @@ setLoading(false);
 
 
 }
+
 
 
 }
@@ -153,7 +195,11 @@ Enter your email and we will send you a password reset link.
 <div className="mt-6">
 
 
-<label className="text-sm font-medium">
+<label className="
+text-sm
+font-medium
+text-slate-700
+">
 
 Email Address
 
@@ -167,6 +213,16 @@ type="email"
 value={email}
 
 onChange={(e)=>setEmail(e.target.value)}
+
+onKeyDown={(e)=>{
+
+if(e.key==="Enter"){
+
+handleReset();
+
+}
+
+}}
 
 placeholder="vet@example.com"
 
