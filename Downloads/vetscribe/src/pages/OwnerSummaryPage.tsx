@@ -534,14 +534,8 @@ export function OwnerSummaryPage(){
       />
 
 
-      <SummarySection
-
-        title="Treatment and Medication"
-
-        text={
-          summary.treatmentAndMedication
-        }
-
+      <TreatmentMedicationSection
+        data={summary.treatmentAndMedication}
       />
 
 
@@ -577,6 +571,172 @@ export function OwnerSummaryPage(){
 
       />
 
+
+    </div>
+
+  );
+
+}
+
+
+
+/* =========================
+   TREATMENT & MEDICATION
+========================= */
+
+function TreatmentMedicationSection(
+{
+  data
+}:{
+  data:any;
+}){
+
+  let items:any[] = [];
+
+  try {
+
+    if(Array.isArray(data)){
+      items = data;
+    }
+    else if(typeof data === "string"){
+      const parsed = JSON.parse(data);
+      items = Array.isArray(parsed) ? parsed : [parsed];
+    }
+    else if(data && typeof data === "object"){
+      items = [data];
+    }
+
+  } catch {
+    items = [];
+  }
+
+
+  return (
+
+    <div className="
+    rounded-2xl
+    border
+    border-slate-200
+    bg-white
+    p-6
+    shadow-sm
+    ">
+
+      <h2 className="
+      text-lg
+      font-semibold
+      text-slate-900
+      ">
+        Treatment and Medication
+      </h2>
+
+
+      {
+        items.length > 0
+
+        ?
+
+        <div className="
+        mt-4
+        space-y-4
+        ">
+
+          {
+            items.map((item:any,index:number)=>(
+
+              <div
+              key={index}
+              className="
+              rounded-xl
+              bg-slate-50
+              p-4
+              border
+              border-slate-100
+              "
+              >
+
+                <h3 className="
+                font-semibold
+                text-slate-900
+                ">
+                  {
+                    item.medicineName ||
+                    item.name ||
+                    item.medication ||
+                    item.treatment ||
+                    `Treatment ${index + 1}`
+                  }
+                </h3>
+
+
+                <div className="
+                mt-3
+                grid
+                gap-3
+                md:grid-cols-2
+                text-sm
+                text-slate-600
+                ">
+
+                  {
+                    item.dose &&
+                    <div>
+                      <span className="font-medium text-slate-800">
+                        Dose:
+                      </span>{" "}
+                      {item.dose}
+                    </div>
+                  }
+
+                  {
+                    item.frequency &&
+                    <div>
+                      <span className="font-medium text-slate-800">
+                        Frequency:
+                      </span>{" "}
+                      {item.frequency}
+                    </div>
+                  }
+
+                  {
+                    item.duration &&
+                    <div>
+                      <span className="font-medium text-slate-800">
+                        Duration:
+                      </span>{" "}
+                      {item.duration}
+                    </div>
+                  }
+
+                  {
+                    item.route &&
+                    <div>
+                      <span className="font-medium text-slate-800">
+                        Route:
+                      </span>{" "}
+                      {item.route}
+                    </div>
+                  }
+
+                </div>
+
+              </div>
+
+            ))
+          }
+
+        </div>
+
+        :
+
+        <p className="
+        mt-3
+        text-slate-600
+        ">
+          No information available.
+        </p>
+
+      }
 
     </div>
 

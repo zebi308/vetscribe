@@ -725,17 +725,46 @@ medicine.instructions || ""
 
 
 
-const ownerSummaries:OwnerSummary[]=
+const ownerSummaries: OwnerSummary[] =
 
 (summariesResult.data || [])
 
-.map(
+.map((item:any) => {
 
-item=>
+  const structured =
+    item.structured_content || {};
 
-item.structured_content as OwnerSummary
+  return {
+    ...structured,
 
-)
+    id: item.id,
+
+    practiceId:
+      item.practice_id,
+
+    consultationId:
+      item.consultation_id,
+
+    patientId:
+      item.patient_id,
+
+    clientId:
+      item.client_id,
+
+    summaryText:
+      item.summary_text ||
+      structured.summaryText ||
+      "",
+
+    generatedAt:
+      item.generated_at,
+
+    generatedBy:
+      item.generated_by,
+
+  } as OwnerSummary;
+
+})
 
 .filter(Boolean);
 

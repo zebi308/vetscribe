@@ -1319,12 +1319,43 @@ console.log("APPROVAL NOTE PAYLOAD", {
   }
 
   async function addOwnerSummary(summary: OwnerSummary) {
-    setOwnerSummaries((prev) => [summary, ...prev]);
 
-    if (!supabase) return;
+  setOwnerSummaries((prev) => [
+    summary,
+    ...prev
+  ]);
 
-    await supabase.from("owner_summaries").insert(summary);
+  if (!supabase) return;
+
+
+  const { error } = await supabase
+    .from("owner_summaries")
+    .insert({
+      id: summary.id,
+      practice_id: summary.practiceId,
+      consultation_id: summary.consultationId,
+      patient_id: summary.patientId,
+      client_id: summary.clientId,
+      summary_text:
+  summary.summaryText ||
+  (summary as any).summary ||
+  (summary as any).text ||
+  JSON.stringify(summary),
+      structured_content: summary,
+      generated_at: summary.generatedAt,
+      generated_by: summary.generatedBy
+    });
+
+
+  if (error) {
+    console.error(
+      "OWNER SUMMARY INSERT ERROR:",
+      error
+    );
+
+    throw error;
   }
+}
 
   async function updateOwnerSummary(
     id: string,
