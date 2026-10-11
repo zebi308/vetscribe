@@ -14,7 +14,7 @@ import {
   Trash2,
   RotateCcw,
   Search,
-FileText
+  FileText
 } from "lucide-react";
 
 
@@ -25,6 +25,8 @@ export function AdminPage(){
 const [userSearch,setUserSearch] = useState("");
 
 const [statusTarget,setStatusTarget] = useState<any>(null);
+
+const [selectedPractice,setSelectedPractice] = useState<any>(null);
 
 const [deleteTarget,setDeleteTarget] = useState<{
 type:"client"|"patient",
@@ -43,7 +45,12 @@ profiles,
 updateUserRole,
 toggleUserStatus,
 auditLogs,
-currentUser
+currentUser,
+practices,
+subscriptions,
+subscriptionPlans,
+platformMetrics,
+aiUsage
 }=useAppState();
 
 
@@ -60,14 +67,7 @@ const filteredProfiles = profiles?.filter((profile:any)=>{
 });
 
 
- const practiceList: any[] = []; // replaced by real practices from AppState
 
- /*
-  Static practice data removed.
-  Final version will receive practices from AppState/repository.
- */
-
- const practices = practiceList.length ? practiceList : [];
 
 
 
@@ -558,7 +558,10 @@ practices.map((practice)=>(
 
 key={practice.name}
 
-className="
+onClick={()=>setSelectedPractice(practice)}
+
+className="cursor-pointer
+
 flex
 flex-col
 gap-4
@@ -585,7 +588,7 @@ hover:bg-slate-50
 
 <p className="text-sm text-slate-500">
 
-{practice.owner}
+{practice.email || ""}
 
 </p>
 
@@ -613,7 +616,11 @@ Plan
 
 <p className="font-medium">
 
-{practice.plan}
+{
+subscriptions?.find(
+(s:any)=>s.practice_id===practice.id
+)?.status || "No Subscription"
+}
 
 </p>
 
@@ -636,7 +643,11 @@ Users
 
 <p className="font-medium">
 
-{practice.users}
+{
+profiles?.filter(
+(p:any)=>p.practiceId===practice.id || p.practice_id===practice.id
+).length || 0
+}
 
 </p>
 
@@ -696,7 +707,10 @@ practice.status==="Active"
 
 
 
-<button className="rounded-lg p-2 hover:bg-slate-100">
+<button
+onClick={()=>setSelectedPractice(practice)}
+className="rounded-lg p-2 hover:bg-slate-100"
+>
 
 <MoreHorizontal size={20}/>
 
@@ -734,6 +748,92 @@ practice.status==="Active"
 
 
 
+
+
+{/* PRACTICE DETAIL PANEL */}
+
+{
+selectedPractice && currentUser?.role === "super_admin" &&
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+space-y-5
+">
+
+<div className="flex justify-between items-center">
+
+<h2 className="text-xl font-semibold">
+Practice Details
+</h2>
+
+<button
+onClick={()=>setSelectedPractice(null)}
+className="text-sm text-slate-500"
+>
+Close
+</button>
+
+</div>
+
+
+<div className="grid md:grid-cols-2 gap-4">
+
+<div className="rounded-xl border p-4">
+<p className="text-sm text-slate-500">Clinic</p>
+<p className="font-semibold">
+{selectedPractice.name}
+</p>
+<p className="text-sm">
+{selectedPractice.email}
+</p>
+</div>
+
+
+<div className="rounded-xl border p-4">
+<p className="text-sm text-slate-500">Users</p>
+<p className="font-semibold">
+{
+profiles?.filter((p:any)=>
+p.practiceId===selectedPractice.id ||
+p.practice_id===selectedPractice.id
+).length || 0
+}
+</p>
+</div>
+
+
+<div className="rounded-xl border p-4">
+<p className="text-sm text-slate-500">Subscription</p>
+<p className="font-semibold">
+{
+subscriptions?.find(
+(s:any)=>s.practice_id===selectedPractice.id
+)?.status || "No subscription"
+}
+</p>
+</div>
+
+
+<div className="rounded-xl border p-4">
+<p className="text-sm text-slate-500">AI Usage</p>
+<p className="font-semibold">
+{
+aiUsage?.filter(
+(a:any)=>a.practice_id===selectedPractice.id
+).length || 0
+}
+</p>
+</div>
+
+</div>
+
+</div>
+
+}
 
 {/* USER MANAGEMENT */}
 
@@ -931,6 +1031,58 @@ text-white
 }
 
 
+
+
+{/* SUBSCRIPTION MANAGEMENT */}
+
+{
+currentUser?.role === "super_admin" &&
+
+<div className="
+rounded-2xl
+border
+border-slate-200
+bg-white
+p-6
+space-y-4
+">
+
+<h2 className="text-xl font-semibold">
+Subscription Overview
+</h2>
+
+{
+subscriptions?.slice(0,20).map((subscription:any)=>(
+
+<div
+key={subscription.id}
+className="
+rounded-xl
+border
+p-4
+"
+>
+
+<p className="font-medium">
+Practice ID: {subscription.practice_id}
+</p>
+
+<p className="text-sm text-slate-500">
+Plan: {subscription.plan_id || "N/A"}
+</p>
+
+<p className="text-sm text-slate-500">
+Status: {subscription.status}
+</p>
+
+</div>
+
+))
+}
+
+</div>
+
+}
 
 {/* AUDIT LOGS */}
 
