@@ -961,7 +961,30 @@ console.log(
         },
       });
 
-    if (createError) throw createError;
+    if (createError) {
+      // Supabase Functions returns a generic non-2xx error for Edge Function
+      // responses. Read the response body so the staff form can show the
+      // actual, user-friendly reason (for example, a duplicate email).
+      let message = "";
+      const response = (createError as any).context;
+
+      if (response && typeof response.clone === "function") {
+        try {
+          const body = await response.clone().json();
+          if (typeof body?.error === "string") message = body.error;
+        } catch {
+          // Keep the fallback below when the response body is not JSON.
+        }
+      }
+
+      message = message || createError.message || "Unable to create veterinarian account.";
+
+      if (/already registered|already been registered|email.*already|user.*exists|email_exists/i.test(message)) {
+        message = "A user with this email already exists. Please use a different email address.";
+      }
+
+      throw new Error(message);
+    }
     if (createdVet?.error) {
       throw new Error(createdVet.error);
     }
@@ -1015,6 +1038,22 @@ console.log(
 
     if (!client) throw new Error("Client not found");
 
+    // Practice Managers may start a consultation, but the treating clinician
+    // must still be an active veterinarian to satisfy the clinical record rules.
+    const treatingVet =
+      currentUser.role === "vet"
+        ? currentUser
+        : profiles.find(
+            (profile) =>
+              profile.practiceId === practice.id &&
+              profile.role === "vet" &&
+              profile.isActive
+          );
+
+    if (!treatingVet) {
+      throw new Error("An active veterinarian must be available to start a consultation.");
+    }
+
     const id = crypto.randomUUID();
 
     const consultation: Consultation = {
@@ -1023,7 +1062,7 @@ console.log(
       patientId,
       clientId: client.id,
       createdBy: currentUser.id,
-      treatingVetId: currentUser.id,
+      treatingVetId: treatingVet.id,
       consultationDate: new Date().toISOString(),
       status: "draft",
       archived: false,
@@ -2142,6 +2181,30 @@ console.log("APPROVAL NOTE PAYLOAD", {
   async function addPatient(patient: Patient) {
 
     ensureActiveSubscription();
+
+    const normalizedName = patient.name.trim().toLocaleLowerCase();
+    const normalizedSpecies = patient.species.trim().toLocaleLowerCase();
+    const normalizedMicrochip = (patient.microchipNumber || "").replace(/\s+/g, "").toLocaleLowerCase();
+
+    const duplicate = patients.find((existing) => {
+      if (existing.practiceId !== patient.practiceId || existing.clientId !== patient.clientId || (existing as any).isDeleted) {
+        return false;
+      }
+
+      const existingMicrochip = (existing.microchipNumber || "").replace(/\s+/g, "").toLocaleLowerCase();
+      if (normalizedMicrochip && existingMicrochip) {
+        return normalizedMicrochip === existingMicrochip;
+      }
+
+      return (
+        existing.name.trim().toLocaleLowerCase() === normalizedName &&
+        existing.species.trim().toLocaleLowerCase() === normalizedSpecies
+      );
+    });
+
+    if (duplicate) {
+      throw new Error("A matching pet already exists for this owner. Open the existing patient record instead of creating a duplicate.");
+    }
 
     const patientLimit = checkSubscriptionLimit("patients");
 

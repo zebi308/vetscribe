@@ -90,7 +90,17 @@ Deno.serve(async (req: Request) => {
       email_confirm: true,
     });
     if (createError || !created.user) {
-      return reply({ error: createError?.message ?? "Unable to create veterinarian account" }, 400);
+      const providerMessage = createError?.message ?? "Unable to create veterinarian account";
+      const duplicateEmail = /already registered|already been registered|email.*already|user.*exists|email_exists/i.test(providerMessage);
+
+      if (duplicateEmail) {
+        return reply(
+          { error: "A user with this email already exists. Please use a different email address." },
+          409,
+        );
+      }
+
+      return reply({ error: providerMessage }, 400);
     }
 
     const { error: profileError } = await admin.from("profiles").insert({
