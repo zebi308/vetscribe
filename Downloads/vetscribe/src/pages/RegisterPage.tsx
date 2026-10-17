@@ -273,7 +273,7 @@ font-bold
 text-slate-900
 ">
 
-Create VetScribe Account
+Create your VetScribe Account
 
 </h1>
 
