@@ -159,6 +159,13 @@ process.env.OPENAI_TRANSCRIPTION_MODEL ||
 "gpt-4o-mini-transcribe"
 );
 
+// Help the transcription model preserve clinical details exactly as spoken.
+// It must not guess or silently correct dates, ages, or numeric values.
+formData.append(
+"prompt",
+"Veterinary consultation recording. Transcribe the speech faithfully. Preserve dates of birth, dates, ages, numbers, names, medicine names, doses, and units exactly as spoken. Do not infer, guess, normalize, or silently correct unclear dates or numbers. If a word or number is unclear, leave the closest audible wording rather than inventing a value."
+);
+
 
 
 

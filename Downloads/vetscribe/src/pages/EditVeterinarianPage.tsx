@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import { useAppState } from "../lib/AppState";
+import { supabase } from "../lib/supabase/client";
 
 export function EditVeterinarianPage() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export function EditVeterinarianPage() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const vet = profiles.find((profile) => profile.id === id);
 
@@ -30,16 +32,42 @@ export function EditVeterinarianPage() {
   }, [vet]);
 
   async function saveChanges() {
-    if (!vet) return;
+    if (!vet || !supabase) {
+      setErrorMessage("Profile service is not available.");
+      return;
+    }
+
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setErrorMessage("First and last name are required.");
+      return;
+    }
 
     setSaving(true);
+    setErrorMessage("");
 
-    // Profile editing can be connected to repository update when available.
-    // Existing account status workflow remains untouched.
-    await refreshData();
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: form.firstName.trim(),
+          last_name: form.lastName.trim(),
+        })
+        .eq("id", vet.id);
 
-    setSaving(false);
-    navigate(`/dashboard/staff/${vet.id}`);
+      if (error) throw error;
+
+      await refreshData();
+      navigate(`/dashboard/staff/${vet.id}`);
+    } catch (error) {
+      console.error("UPDATE STAFF PROFILE ERROR", error);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to save veterinarian details."
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function changeStatus() {
@@ -115,6 +143,10 @@ export function EditVeterinarianPage() {
             {vet.isActive ? "Deactivate" : "Activate"}
           </button>
         </div>
+
+        {errorMessage && (
+          <p role="alert" className="text-sm text-red-600">{errorMessage}</p>
+        )}
 
         <button
           onClick={saveChanges}

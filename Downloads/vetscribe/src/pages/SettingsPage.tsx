@@ -12,7 +12,7 @@ export function SettingsPage() {
     name: "", email: "", phone: "", address_line_1: "", city: "", postcode: "", logo_url: "",
   });
   const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "" });
-  const [passwordForm, setPasswordForm] = useState({ password: "", confirm: "" });
+  const [passwordForm, setPasswordForm] = useState({ current: "", password: "", confirm: "" });
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [saving, setSaving] = useState<"practice" | "profile" | "password" | null>(null);
@@ -39,13 +39,17 @@ export function SettingsPage() {
     event.preventDefault();
     if (!isPracticeManager || !practice) return;
     if (!practiceForm.name.trim()) return report("practice", "Practice name is required.");
+    const phone = practiceForm.phone.trim();
+    if (phone && !/^\+?\d{7,15}$/.test(phone)) {
+      return report("practice", "Enter a phone number with 7–15 digits, optionally starting with +.");
+    }
     try {
       setSaving("practice");
       setFeedback(null);
       await updatePractice({
         name: practiceForm.name.trim(),
         email: practiceForm.email.trim(),
-        phone: practiceForm.phone.trim(),
+        phone,
         address_line_1: practiceForm.address_line_1.trim(),
         city: practiceForm.city.trim(),
         postcode: practiceForm.postcode.trim(),
@@ -84,6 +88,8 @@ export function SettingsPage() {
   async function changePassword(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return report("password", "Authentication is not available.");
+    if (!currentUser?.email) return report("password", "Account email is not available.");
+    if (!passwordForm.current) return report("password", "Enter your current password.");
     if (passwordForm.password.length < 8)
       return report("password", "Use a password with at least 8 characters.");
     if (passwordForm.password !== passwordForm.confirm)
@@ -91,9 +97,19 @@ export function SettingsPage() {
     try {
       setSaving("password");
       setFeedback(null);
+
+      // Verify the current password before allowing a password change.
+      const { error: verificationError } = await supabase.auth.signInWithPassword({
+        email: currentUser.email,
+        password: passwordForm.current,
+      });
+      if (verificationError) {
+        throw new Error("Your current password is incorrect.");
+      }
+
       const { error } = await supabase.auth.updateUser({ password: passwordForm.password });
       if (error) throw error;
-      setPasswordForm({ password: "", confirm: "" });
+      setPasswordForm({ current: "", password: "", confirm: "" });
       report("password", "Password updated successfully.", true);
     } catch (error: any) {
       report("password", error?.message || "Unable to update password. You may need to sign in again.");
@@ -143,8 +159,21 @@ export function SettingsPage() {
               ] as const).map(([key, label, type]) => (
                 <label key={key} className="block min-w-0 text-sm font-medium text-slate-800">
                   {label}
-                  <input type={type} className={inputClass} value={practiceForm[key]}
-                    onChange={(e) => setPracticeForm((prev) => ({ ...prev, [key]: e.target.value }))} />
+                  <input
+                    type={type}
+                    inputMode={key === "phone" ? "tel" : undefined}
+                    maxLength={key === "phone" ? 16 : undefined}
+                    pattern={key === "phone" ? "[+]?[0-9]{7,15}" : undefined}
+                    autoComplete={key === "phone" ? "tel" : undefined}
+                    className={inputClass}
+                    value={practiceForm[key]}
+                    onChange={(e) => {
+                      const value = key === "phone"
+                        ? e.target.value.replace(/[^0-9+]/g, "").replace(/(?!^)\+/g, "").slice(0, 16)
+                        : e.target.value;
+                      setPracticeForm((prev) => ({ ...prev, [key]: value }));
+                    }}
+                  />
                 </label>
               ))}
             </div>
@@ -206,6 +235,18 @@ export function SettingsPage() {
         </div>
         <form onSubmit={changePassword} className="mt-6 space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
+            <div className="block min-w-0 text-sm font-medium text-slate-800 sm:col-span-2">
+              <label htmlFor="settings-current-password">Current Password</label>
+              <input
+                id="settings-current-password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className={inputClass}
+                value={passwordForm.current}
+                onChange={(e) => setPasswordForm((prev) => ({ ...prev, current: e.target.value }))}
+              />
+            </div>
             <div className="block min-w-0 text-sm font-medium text-slate-800">
               <label htmlFor="settings-new-password">New Password</label>
               <div className="relative">

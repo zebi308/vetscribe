@@ -85,6 +85,7 @@ export function PatientHistoryPage() {
     patients,
     clients,
     consultations,
+    practice,
     medicines,
     ownerSummaries,
     followUps
@@ -559,6 +560,25 @@ export function PatientHistoryPage() {
 
     <div className="space-y-8">
 
+
+      {/* CLARIANA-THEMED PRINT HEADER */}
+      <div
+        className="rounded-2xl px-6 py-5 text-white print:rounded-none"
+        style={{
+          backgroundColor: practice?.primaryColor || "#0f766e",
+          printColorAdjust: "exact",
+          WebkitPrintColorAdjust: "exact",
+        }}
+      >
+        <p className="text-sm font-semibold uppercase tracking-wider opacity-90">
+          {practice?.name || "VetScribe"}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold">Medical History</h1>
+        <p className="mt-1 text-sm opacity-90">
+          {patient.name}{patient.species ? ` · ${patient.species}` : ""}
+          {patient.breed ? ` · ${patient.breed}` : ""}
+        </p>
+      </div>
 
       {/* HEADER */}
 

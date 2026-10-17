@@ -19,6 +19,7 @@ import { AppShell } from "./components/layout/AppShell";
 // Public Pages
 
 import { LandingPage } from "./pages/LandingPage";
+import { UnauthorizedPage } from "./pages/UnauthorizedPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
@@ -108,6 +109,8 @@ path="/"
 element={<LandingPage/>}
 
 />
+
+<Route path="/unauthorized" element={<UnauthorizedPage />} />
 
 
 
@@ -229,6 +232,7 @@ element={<ConsultationsPage/>}
     <ProtectedRoute
       allowedRoles={[
         "vet",
+        "practice_manager",
         "super_admin"
       ]}
     />

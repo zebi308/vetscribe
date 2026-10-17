@@ -56,6 +56,7 @@ const [search,setSearch] = useState("");
 const [selected,setSelected] = useState<string>("");
 
 const [loading,setLoading] = useState(false);
+const [startError,setStartError] = useState("");
 
 
 
@@ -116,77 +117,31 @@ search
 
 
 async function start(patientId:string){
+  if(!patientId || loading) return;
 
+  try {
+    setSelected(patientId);
+    setLoading(true);
+    setStartError("");
 
+    const consultationId = await createConsultation(patientId);
+    if (!consultationId) {
+      throw new Error("The consultation was not created. Please try again.");
+    }
 
-if(!patientId || loading)
-
-return;
-
-
-
-
-
-try{
-
-
-setSelected(patientId);
-
-setLoading(true);
-
-
-
-
-
-const consultationId = await createConsultation(patientId);
-
-console.log("CREATED CONSULTATION ID:", consultationId);
-
-if (!consultationId) {
-  console.error("No consultation id returned from createConsultation");
-  return;
+    navigate(`/dashboard/consultations/${consultationId}`);
+  } catch (error) {
+    console.error("START CONSULTATION ERROR", error);
+    setStartError(
+      error instanceof Error
+        ? error.message
+        : "Unable to start the consultation. Please try again."
+    );
+  } finally {
+    setLoading(false);
+    setSelected("");
+  }
 }
-
-navigate(`/dashboard/consultations/${consultationId}`);
-
-
-
-
-
-}
-
-catch(error){
-
-
-console.error(
-
-"START CONSULTATION ERROR",
-
-error
-
-);
-
-
-}
-
-finally{
-
-
-setLoading(false);
-
-
-}
-
-
-
-}
-
-
-
-
-
-
-
 
 
 return (
@@ -223,6 +178,12 @@ Find a patient below and click Start Consultation to begin a new clinical record
 
 
 
+
+{startError && (
+  <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    {startError}
+  </p>
+)}
 
 <Card className="p-5">
 

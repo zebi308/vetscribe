@@ -474,7 +474,11 @@ postcode:client.postcode || "",
 phone:client.phone || "",
 
 
-email:client.email || ""
+email:client.email || "",
+
+isDeleted:Boolean(client.is_deleted),
+
+deletedAt:client.deleted_at || undefined
 
 
 
@@ -537,7 +541,11 @@ patient.colour || undefined,
 
 weightKg:
 
-Number(patient.weight_kg || 0)
+Number(patient.weight_kg || 0),
+
+isDeleted:Boolean(patient.is_deleted),
+
+deletedAt:patient.deleted_at || undefined
 
 
 

@@ -267,7 +267,7 @@ export function EditPatientPage() {
       window.setTimeout(() => {
 
         navigate(
-          `/patients/${patient.id}`
+          `/dashboard/patients/${patient.id}`
         );
 
       }, 900);
@@ -304,14 +304,14 @@ export function EditPatientPage() {
     if (patient) {
 
       navigate(
-        `/patients/${patient.id}`
+        `/dashboard/patients/${patient.id}`
       );
 
       return;
     }
 
 
-    navigate("/patients");
+    navigate("/dashboard/patients");
   }
 
 
@@ -338,7 +338,7 @@ export function EditPatientPage() {
 
         <button
           type="button"
-          onClick={() => navigate("/patients")}
+          onClick={() => navigate("/dashboard/patients")}
           className="
             inline-flex
             items-center
@@ -434,7 +434,7 @@ export function EditPatientPage() {
 
           <button
             type="button"
-            onClick={() => navigate("/patients")}
+            onClick={() => navigate("/dashboard/patients")}
             className="
               mt-6
               inline-flex

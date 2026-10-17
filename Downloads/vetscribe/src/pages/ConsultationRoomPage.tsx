@@ -172,7 +172,7 @@ export function ConsultationRoomPage(){
 
   useEffect(() => {
 
-    if(!recording){
+    if(!recording || paused){
       return;
     }
 
@@ -188,7 +188,7 @@ export function ConsultationRoomPage(){
     return () =>
       clearInterval(timer);
 
-  },[recording]);
+  },[recording, paused]);
 
   function formatTime(){
 

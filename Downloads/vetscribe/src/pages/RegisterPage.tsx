@@ -604,6 +604,10 @@ required
 
 type="password"
 
+minLength={8}
+
+autoComplete="new-password"
+
 value={form.password}
 
 onChange={(e)=>
@@ -615,7 +619,7 @@ e.target.value
 
 className="w-full outline-none"
 
-placeholder="Minimum 6 characters"
+placeholder="Minimum 8 characters"
 
 />
 
